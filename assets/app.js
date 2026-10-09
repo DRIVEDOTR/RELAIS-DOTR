@@ -259,7 +259,7 @@
     var bub = RUBS.map(function (r) {
       var n = docs.filter(function (d) { return d.rub === r.id; }).length; if (!n) return "";
       var dim = pf && (r.profils || []).length && r.profils.indexOf(pf) < 0;
-      return '<a class="bw' + (dim ? " dim" : "") + '" href="#/r/' + enc(r.id) + '"><div class="bubble bc-' + (r.color || "blue") + '">' + ic(r.icon || "folder") + "<b>" + esc(r.label) + "</b><em>" + n + "</em></div><p>" + esc(r.desc || "") + "</p></a>";
+      return '<a class="bw' + (dim ? " dim" : "") + '" href="#/r/' + enc(r.id) + '" title="' + esc(r.desc || "") + '"><div class="bubble bc-' + (r.color || "blue") + '">' + ic(r.icon || "folder") + "<b>" + esc(r.label) + "</b><em>" + n + '</em></div><span class="sr">' + esc(r.desc || "") + "</span></a>";
     }).join("");
     var pc = PARCOURS.map(function (p) {
       var n = parcoursDocs(p).length; if (!n) return "";
@@ -270,8 +270,8 @@
     var chips = PROFILS.map(function (p) { return '<button class="chip" type="button" data-p="' + esc(p.id) + '" aria-pressed="' + (pf === p.id) + '">' + esc(p.label) + "</button>"; }).join("");
     var rise = ""; for (var i = 0; i < 14; i++) { var s = 14 + Math.round(Math.random() * 70); rise += '<i style="left:' + Math.round(Math.random() * 100) + "%;width:" + s + "px;height:" + s + "px;animation-duration:" + (14 + Math.round(Math.random() * 22)) + "s;animation-delay:-" + Math.round(Math.random() * 30) + "s;--sx:" + (Math.round(Math.random() * 80) - 40) + 'px"></i>'; }
     var nm = esc(SITE.name || "Hub").replace(/(\S+)$/, "<span>$1</span>");
-    mount('<header class="hero"><div class="hero-bubbles" aria-hidden="true">' + rise + '</div><div class="hero-art" aria-hidden="true">' + (window.HubCompass ? window.HubCompass.art() : "") + '</div><div class="wrap">' +
-      '<img class="hero-logo" src="assets/img/logo-couleur.png" alt="Docs On The Road"><h1>' + nm + '</h1><p class="slogan"><b>' + esc(SITE.slogan || "") + "</b><br>" + esc(SITE.baseline || "") + "</p>" +
+    mount('<header class="hero"><div class="hero-bubbles" aria-hidden="true">' + rise + '</div><div class="hero-art" aria-hidden="true"><canvas id="globe"></canvas>' + (window.HubCompass ? window.HubCompass.art() : "") + '</div><div class="wrap">' +
+      '<h1>' + nm + '</h1><p class="slogan"><b>' + esc(SITE.slogan || "") + "</b><br>" + esc(SITE.baseline || "") + "</p>" +
       searchBox("sx-hero", window.innerWidth < 600 ? "Rechercher un document…" : "Que cherchez-vous ? convention, logo, CRM, tuto Healphi…", true) +
       '<div class="persona"><span>Je suis…</span>' + chips + "</div></div></header>" +
       '<div class="wrap"><nav class="bubbles" aria-label="Rubriques">' + bub + "</nav>" +
@@ -279,6 +279,7 @@
       '<section class="s"><div class="s-h"><div><h2>Je veux…</h2><p>Des parcours tout prêts pour une situation précise</p></div></div><div class="pgrid">' + pc + "</div></section>" +
       (ess.length ? '<section class="s"><div class="s-h"><div><h2>' + (pf ? "Les essentiels pour vous" : "Les essentiels") + "</h2><p>À connaître en priorité</p></div></div><div class=\"grid\">" + ess.slice(0, 8).map(function (d) { return card(d, { crumb: true, noStar: true }); }).join("") + "</div></section>" : "") +
       '<section class="s"><div class="s-h"><div><h2>Derniers documents</h2><p>Les plus récemment mis à jour</p></div></div><div class="grid">' + last.map(function (d) { return card(d, { crumb: true }); }).join("") + "</div></section></div>", true);
+    stopGlobe = window.HubGlobe ? window.HubGlobe.mount($("#globe")) : null;
     var sb = bindSearch($("#sx-hero"), true);
     $$(".chip[data-p]").forEach(function (b) { b.addEventListener("click", function () { var v = b.dataset.p === profil() ? "" : b.dataset.p; store.set("hub.profil", v); home(); }); });
   }
