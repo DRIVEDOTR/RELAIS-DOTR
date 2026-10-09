@@ -184,6 +184,12 @@
     topSearch = bindSearch($("#sx-top"));
     var repo = repoUrl();
     var ft = $("#foot"); if (ft) ft.remove();
+    (function () { /* survol prolongé : la bulle grossit et dévoile son contenu */
+      if (window.__bwHover) return; window.__bwHover = 1; var tm = 0, cur = null;
+      document.addEventListener("mouseover", function (e) { var w = e.target.closest && e.target.closest(".bw"); if (w === cur) return; clearTimeout(tm); if (cur) cur.classList.remove("open"); cur = w; if (w) tm = setTimeout(function () { w.classList.add("open"); }, 450); });
+      document.addEventListener("focusin", function (e) { var w = e.target.closest && e.target.closest(".bw"); if (w) { clearTimeout(tm); tm = setTimeout(function () { w.classList.add("open"); }, 450); } });
+      document.addEventListener("focusout", function (e) { var w = e.target.closest && e.target.closest(".bw"); if (w) { clearTimeout(tm); w.classList.remove("open"); } });
+    })();
     $(".brand").addEventListener("click", function () { if (location.hash === "#/" || !location.hash) window.scrollTo({ top: 0, behavior: "smooth" }); });
   }
   function repoUrl() {
@@ -259,7 +265,7 @@
     var bub = RUBS.map(function (r) {
       var n = docs.filter(function (d) { return d.rub === r.id; }).length; if (!n) return "";
       var dim = pf && (r.profils || []).length && r.profils.indexOf(pf) < 0;
-      return '<a class="bw' + (dim ? " dim" : "") + '" href="#/r/' + enc(r.id) + '" title="' + esc(r.desc || "") + '"><div class="bubble bc-' + (r.color || "blue") + '">' + ic(r.icon || "folder") + "<b>" + esc(r.label) + "</b><em>" + n + '</em></div><span class="sr">' + esc(r.desc || "") + "</span></a>";
+      return '<a class="bw' + (dim ? " dim" : "") + '" href="#/r/' + enc(r.id) + '"><div class="bubble bc-' + (r.color || "blue") + '">' + ic(r.icon || "folder") + "<b>" + esc(r.label) + "</b><small class=\"bd\">" + esc(r.desc || "") + "</small><em>" + n + '</em></div><span class="sr">' + esc(r.desc || "") + "</span></a>";
     }).join("");
     var pc = PARCOURS.map(function (p) {
       var n = parcoursDocs(p).length; if (!n) return "";
