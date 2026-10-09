@@ -32,52 +32,59 @@ window.HubGlobe = {
       var d = Math.max(120, Math.min(420, Math.round(Math.min(W, H) * 0.32 * 2 * dpr))); if (d !== D) build(d);
     }
     function paint(a) {
-      var d = img.data, n = D * D, sh = 0;
+      var d = img.data, n = D * D, cl = function (v) { return v < 0 ? 0 : v > 1 ? 1 : v; };
       for (var k = 0; k < n; k++) {
         var o = k * 4, f = pre.in[k]; if (!f) { d[o + 3] = 0; continue; }
-        var z = pre.z[k], x = pre.x[k], y = pre.y[k];
-        var m = samp(pre.lon[k] + a, pre.v[k]) / 255, L = m < 0.3 ? 0 : m > 0.7 ? 1 : (m - 0.3) / 0.4; L = L * L * (3 - 2 * L);
-        var li = Math.max(0, Math.min(1, 0.62 + 0.38 * (-x * 0.45 + y * 0.5 + z * 0.75))), limb = Math.pow(1 - z, 2.2);
-        var rr, gg, bb;
-        var gx = Math.max(0, Math.min(1, 0.5 + 0.5 * (x * 0.7 - y * 0.7)));
-        var lr = 43 + (60 - 43) * (1 - gx) + 0 * gx, lg = 71 + (150 - 71) * (1 - gx) + 20 * gx, lb = 246 + (250 - 246) * (1 - gx);
-        lr = lr * (0.82 + 0.18 * li) * (1 - 0.25 * limb); lg = lg * (0.82 + 0.18 * li) * (1 - 0.2 * limb); lb = lb * (0.88 + 0.12 * li);
-        var or = 255 - 38 * limb - 8 * (1 - li), og = 255 - 22 * limb - 6 * (1 - li), ob = 255 - 4 * limb;
-        rr = or + (lr - or) * L; gg = og + (lg - og) * L; bb = ob + (lb - ob) * L;
+        var z = pre.z[k], x = pre.x[k], y = pre.y[k], u = pre.lon[k] + a, v = pre.v[k];
+        var m = samp(u, v) / 255, L = m < 0.2 ? 0 : m > 0.8 ? 1 : (m - 0.2) / 0.6; L = L * L * (3 - 2 * L);
+        var deep = (samp(u - 5, v) + samp(u + 5, v) + samp(u, v - 5) + samp(u, v + 5)) / 1020;
+        var limb = Math.pow(1 - z, 1.7), ul = cl(0.5 + 0.5 * (-x * 0.75 + y * 0.65)), lr = cl(0.5 + 0.5 * (x * 0.7 - y * 0.7));
+        /* océan : blanc, bord bleuté surtout en haut à gauche comme sur le logo */
+        var tn = cl(limb * (0.30 + 0.85 * ul) * 1.15 + 0.10 * ul * (1 - z));
+        var or = 255 + (58 - 255) * tn, og = 255 + (104 - 255) * tn, ob = 255 + (236 - 255) * tn;
+        /* continents : dégradé bleu profond → bleu vif */
+        var g1 = cl(0.18 + 0.62 * lr + 0.25 * (1 - deep) * 0.0), sh = 1 - 0.28 * limb;
+        var cr = (18 + (74 - 18) * g1) * sh, cg = (44 + (146 - 44) * g1) * sh, cb = (196 + (255 - 196) * g1) * (1 - 0.1 * limb);
+        cr += 20 * (1 - deep) * L; cg += 34 * (1 - deep) * L; cb += 10 * (1 - deep) * L;
+        var rr = or + (cr - or) * L, gg = og + (cg - og) * L, bb = ob + (cb - ob) * L;
         d[o] = rr; d[o + 1] = gg; d[o + 2] = bb; d[o + 3] = 255 * pre.a[k];
       }
       octx.putImageData(img, 0, 0);
     }
-    /* anneaux : croissants effilés sur des ellipses inclinées, comme dans le logo */
+    /* anneaux du logo : croissants effilés, épais en bas à gauche, fins en haut à droite */
     var RINGS = [
-      { A: 1.36, B: 0.48, rz: -0.50, w: 0.115, sp: 0.00032, ph: 0.2, span: 1.55 },
-      { A: 1.26, B: 0.42, rz: -0.44, w: 0.085, sp: -0.00027, ph: 2.4, span: 1.35 },
-      { A: 1.16, B: 0.37, rz: -0.38, w: 0.060, sp: 0.00040, ph: 4.3, span: 1.20 }
+      { A: 1.40, B: 0.54, rz: -0.52, w: 0.270, ph: -0.42, span: 1.52, ps: 0.00045, pa: 0.10 },
+      { A: 1.32, B: 0.50, rz: -0.52, w: 0.190, ph: -0.30, span: 1.40, ps: 0.00052, pa: 0.12 },
+      { A: 1.25, B: 0.46, rz: -0.52, w: 0.130, ph: -0.18, span: 1.28, ps: 0.00060, pa: 0.14 },
+      { A: 1.18, B: 0.42, rz: -0.52, w: 0.080, ph: -0.06, span: 1.12, ps: 0.00068, pa: 0.16 }
     ];
     function ringPt(r, th, off, R, cx, cy) {
-      var ox = Math.cos(th) * (r.A + off) * R, oy = Math.sin(th) * (r.B + off * 0.35) * R, cr = Math.cos(r.rz), sr = Math.sin(r.rz);
+      var ox = Math.cos(th) * (r.A + off) * R, oy = Math.sin(th) * (r.B + off * 0.45) * R, cr = Math.cos(r.rz), sr = Math.sin(r.rz);
       return { x: cx + ox * cr - oy * sr, y: cy + ox * sr + oy * cr, f: Math.sin(th) > 0 };
     }
+    function ringTh(r, t, s) { return (r.ph + r.pa * Math.sin(t * r.ps * 2 + s)) * Math.PI; }
     function drawRings(front, t, R, cx, cy) {
       for (var s = 0; s < RINGS.length; s++) {
-        var r = RINGS[s], n = 90, th0 = r.ph + t * r.sp * 2.2, span = r.span * Math.PI, breath = 1 + 0.12 * Math.sin(t * 0.0016 + s * 1.7);
+        var r = RINGS[s], n = 110, th0 = ringTh(r, t, s), span = r.span * Math.PI, breath = 1 + 0.10 * Math.sin(t * 0.0016 + s * 1.7);
         var outer = [], inner = [];
         for (var j = 0; j <= n; j++) {
-          var u = j / n, th = th0 + u * span, wv = r.w * breath * Math.pow(Math.sin(Math.PI * u), 0.85);
+          var u = j / n, th = th0 + u * span, wv = r.w * breath * Math.pow(Math.sin(Math.PI * Math.pow(u, 0.62)), 1.05);
           outer.push(ringPt(r, th, wv * 0.5, R, cx, cy)); inner.push(ringPt(r, th, -wv * 0.5, R, cx, cy));
         }
-        var j0 = 0;
+        var j0 = 0, a0 = outer[0], a1 = outer[n];
         while (j0 <= n) {
-          var fr = outer[j0].f; if (fr !== front) { j0++; continue; }
+          if (outer[j0].f !== front) { j0++; continue; }
           var j1 = j0; while (j1 + 1 <= n && outer[j1 + 1].f === front) j1++;
           if (j1 > j0) {
-            var a = outer[j0], b = outer[j1], g = ctx.createLinearGradient(a.x, a.y, b.x, b.y), sh = 0.5 + 0.38 * Math.sin(t * 0.0022 + s * 2.1);
-            var al = front ? 0.95 : 0.55;
-            g.addColorStop(0, "rgba(43,71,246," + al + ")"); g.addColorStop(Math.max(.05, Math.min(.95, sh)), "rgba(51,213,251," + al + ")"); g.addColorStop(1, "rgba(43,71,246," + (al * 0.9) + ")");
+            var g = ctx.createLinearGradient(a1.x, a1.y, a0.x, a0.y), al = front ? 1 : 0.62, sh = 0.30 + 0.40 * (0.5 + 0.5 * Math.sin(t * 0.0013 + s * 1.9));
+            g.addColorStop(0, "rgba(120,225,255," + al * 0.55 + ")"); g.addColorStop(0.14, "rgba(60,150,255," + al + ")");
+            g.addColorStop(0.42, "rgba(26,56,208," + al + ")"); g.addColorStop(Math.min(.9, sh + 0.12), "rgba(70,150,255," + al + ")");
+            g.addColorStop(0.82, "rgba(40,110,240," + al * 0.9 + ")"); g.addColorStop(1, "rgba(51,213,251," + al * 0.35 + ")");
             ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(outer[j0].x, outer[j0].y);
             for (var q = j0 + 1; q <= j1; q++) ctx.lineTo(outer[q].x, outer[q].y);
             for (q = j1; q >= j0; q--) ctx.lineTo(inner[q].x, inner[q].y);
             ctx.closePath(); ctx.fill();
+            if (front) { ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(inner[j0].x, inner[j0].y); for (q = j0 + 1; q <= j1; q++) ctx.lineTo(inner[q].x, inner[q].y); ctx.stroke(); }
           }
           j0 = j1 + 1;
         }
@@ -96,13 +103,14 @@ window.HubGlobe = {
       drawRings(false, t, R, cx, cy);
       paint(a); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
       ctx.drawImage(off, cx - R - R * D / (D - 2) * 0 - (R * D / (D - 2) - R), cy - R - (R * D / (D - 2) - R), R * 2 * D / (D - 2), R * 2 * D / (D - 2));
-      ctx.strokeStyle = "rgba(43,71,246,.35)"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 7); ctx.stroke();
       drawRings(true, t, R, cx, cy);
+      var pul = 0.6 + 0.4 * Math.sin(t * 0.0025), r0 = RINGS[0], tipL = ringPt(r0, ringTh(r0, t, 0) + r0.span * Math.PI * 0.97, 0, R, cx, cy), tipR = ringPt(r0, ringTh(r0, t, 0) + r0.span * Math.PI * 0.02, 0, R, cx, cy);
+      var fl = ctx.createRadialGradient(tipL.x, tipL.y, 0, tipL.x, tipL.y, R * 0.34 * pul);
+      fl.addColorStop(0, "rgba(255,255,255,.95)"); fl.addColorStop(0.25, "rgba(110,225,255,.6)"); fl.addColorStop(1, "rgba(51,213,251,0)");
+      ctx.fillStyle = fl; ctx.beginPath(); ctx.arc(tipL.x, tipL.y, R * 0.34, 0, 7); ctx.fill();
       var tw = function (p) { return Math.max(0, Math.sin(t * 0.003 + p)); };
-      var p1 = ringPt(RINGS[0], RINGS[0].ph + t * RINGS[0].sp * 2.2 + RINGS[0].span * Math.PI * 0.8, 0, R, cx, cy), p2 = ringPt(RINGS[1], RINGS[1].ph + t * RINGS[1].sp * 2.2 + RINGS[1].span * Math.PI * 0.3, 0, R, cx, cy);
-      star(p1.x, p1.y, R * 0.11, 0.35 + 0.65 * tw(0), "#FFFFFF"); star(p1.x, p1.y, R * 0.075, 0.5 + 0.5 * tw(0), "#33D5FB");
-      star(p2.x, p2.y, R * 0.08, 0.3 + 0.7 * tw(2), "#33D5FB");
-      star(cx + R * 1.12, cy - R * 0.78, R * 0.07, 0.25 + 0.75 * tw(4), "#33D5FB"); star(cx - R * 1.08, cy + R * 0.55, R * 0.055, 0.25 + 0.75 * tw(1), "#2B47F6");
+      star(tipL.x, tipL.y, R * 0.16 * pul, 0.9, "#FFFFFF"); star(tipR.x, tipR.y, R * 0.12, 0.35 + 0.65 * tw(1.5), "#7FE3FF");
+      star(cx + R * 1.18, cy - R * 0.7, R * 0.07, 0.25 + 0.75 * tw(4), "#33D5FB"); star(cx - R * 0.95, cy + R * 0.9, R * 0.06, 0.25 + 0.75 * tw(2.5), "#33D5FB");
     }
     function loop(now) { raf = 0; if (!visible || document.hidden) return; frame(now); if (!reduce) raf = requestAnimationFrame(loop); }
     function kick() { if (!raf) raf = requestAnimationFrame(loop); }

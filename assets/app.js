@@ -183,7 +183,7 @@
       '<nav class="nav" aria-label="Navigation"><a href="#/">' + ic("home") + '<span>Accueil</span></a><a href="#/route">' + ic("compass") + '<span>La Route</span></a><a href="#/guide">' + ic("book") + "<span>Guide</span></a></nav></div>";
     topSearch = bindSearch($("#sx-top"));
     var repo = repoUrl();
-    $("#foot").innerHTML = '<div class="wrap"><div><img src="assets/img/logo-couleur.png" alt="Docs On The Road"><p style="margin-top:8px">' + esc(SITE.baseline || "") + '</p></div><div class="l"><a href="#/guide">Guide : ajouter ou modifier un document</a>' + (repo ? '<a href="' + esc(repo) + '" target="_blank" rel="noopener">Gérer le contenu (GitHub)</a>' : "") + '</div><div style="font-size:12px;opacity:.7">' + docs.length + " ressources · catalogue mis à jour le " + esc(fmtDate((H.generated || "").slice(0, 10))) + "</div></div>";
+    var ft = $("#foot"); if (ft) ft.remove();
     $(".brand").addEventListener("click", function () { if (location.hash === "#/" || !location.hash) window.scrollTo({ top: 0, behavior: "smooth" }); });
   }
   function repoUrl() {
