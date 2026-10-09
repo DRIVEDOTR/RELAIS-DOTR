@@ -38,14 +38,16 @@ window.HubGlobe = {
         var z = pre.z[k], x = pre.x[k], y = pre.y[k], u = pre.lon[k] + a, v = pre.v[k];
         var m = samp(u, v) / 255, L = m < 0.2 ? 0 : m > 0.8 ? 1 : (m - 0.2) / 0.6; L = L * L * (3 - 2 * L);
         var deep = (samp(u - 5, v) + samp(u + 5, v) + samp(u, v - 5) + samp(u, v + 5)) / 1020;
-        var limb = Math.pow(1 - z, 1.7), ul = cl(0.5 + 0.5 * (-x * 0.75 + y * 0.65)), lr = cl(0.5 + 0.5 * (x * 0.7 - y * 0.7));
-        /* océan : blanc, bord bleuté surtout en haut à gauche comme sur le logo */
-        var tn = cl(limb * (0.30 + 0.85 * ul) * 1.15 + 0.10 * ul * (1 - z));
-        var or = 255 + (58 - 255) * tn, og = 255 + (104 - 255) * tn, ob = 255 + (236 - 255) * tn;
-        /* continents : dégradé bleu profond → bleu vif */
-        var g1 = cl(0.18 + 0.62 * lr + 0.25 * (1 - deep) * 0.0), sh = 1 - 0.28 * limb;
-        var cr = (18 + (74 - 18) * g1) * sh, cg = (44 + (146 - 44) * g1) * sh, cb = (196 + (255 - 196) * g1) * (1 - 0.1 * limb);
-        cr += 20 * (1 - deep) * L; cg += 34 * (1 - deep) * L; cb += 10 * (1 - deep) * L;
+        var e = 1 - z, ul = cl(0.5 + 0.5 * (-x * 0.75 + y * 0.65)), lr = cl(0.5 + 0.5 * (x * 0.7 - y * 0.7)), limb = Math.pow(e, 1.7);
+        /* océan : blanc au centre, bleu franc et saturé vers le bord (surtout haut / gauche) comme sur le logo */
+        var tn = cl(Math.pow(e, 1.15) * (0.55 + 0.95 * ul) * 1.25), or, og, ob;
+        if (tn < 0.5) { var q1 = tn * 2; or = 255 + (118 - 255) * q1; og = 255 + (160 - 255) * q1; ob = 255 + (255 - 255) * q1; }
+        else { var q2 = (tn - 0.5) * 2; or = 118 + (28 - 118) * q2; og = 160 + (56 - 160) * q2; ob = 255 + (222 - 255) * q2; }
+        /* continents : bleu royal profond → bleu vif, lisières plus claires */
+        var g1 = cl(0.10 + 0.78 * lr + 0.2 * (1 - ul) * 0.0), sh = 1 - 0.22 * limb, rim = 1 - deep;
+        var cr = (16 + (64 - 16) * g1) * sh, cg = (34 + (128 - 34) * g1) * sh, cb = 190 + (255 - 190) * g1;
+        cr += 38 * rim * L; cg += 52 * rim * L; cb += 0;
+        cr = Math.min(255, cr); cg = Math.min(255, cg); cb = Math.min(255, cb);
         var rr = or + (cr - or) * L, gg = og + (cg - og) * L, bb = ob + (cb - ob) * L;
         d[o] = rr; d[o + 1] = gg; d[o + 2] = bb; d[o + 3] = 255 * pre.a[k];
       }
@@ -53,39 +55,39 @@ window.HubGlobe = {
     }
     /* anneaux du logo : croissants effilés, épais en bas à gauche, fins en haut à droite */
     var RINGS = [
-      { A: 1.40, B: 0.54, rz: -0.52, w: 0.270, ph: -0.42, span: 1.52, ps: 0.00045, pa: 0.10 },
-      { A: 1.32, B: 0.50, rz: -0.52, w: 0.190, ph: -0.30, span: 1.40, ps: 0.00052, pa: 0.12 },
-      { A: 1.25, B: 0.46, rz: -0.52, w: 0.130, ph: -0.18, span: 1.28, ps: 0.00060, pa: 0.14 },
-      { A: 1.18, B: 0.42, rz: -0.52, w: 0.080, ph: -0.06, span: 1.12, ps: 0.00068, pa: 0.16 }
+      { A: 1.48, B: 0.58, rz: -0.52, w: 0.200, ph: -0.42, span: 1.52, ps: 0.00045, pa: 0.10 },
+      { A: 1.37, B: 0.52, rz: -0.52, w: 0.150, ph: -0.30, span: 1.40, ps: 0.00052, pa: 0.12 },
+      { A: 1.28, B: 0.47, rz: -0.52, w: 0.110, ph: -0.18, span: 1.28, ps: 0.00060, pa: 0.14 },
+      { A: 1.20, B: 0.42, rz: -0.52, w: 0.075, ph: -0.06, span: 1.12, ps: 0.00068, pa: 0.16 }
     ];
     function ringPt(r, th, off, R, cx, cy) {
       var ox = Math.cos(th) * (r.A + off) * R, oy = Math.sin(th) * (r.B + off * 0.45) * R, cr = Math.cos(r.rz), sr = Math.sin(r.rz);
       return { x: cx + ox * cr - oy * sr, y: cy + ox * sr + oy * cr, f: Math.sin(th) > 0 };
     }
     function ringTh(r, t, s) { return (r.ph + r.pa * Math.sin(t * r.ps * 2 + s)) * Math.PI; }
+    function ringCol(u, m) {
+      var S = [[0, 140, 232, 255], [0.08, 64, 160, 255], [0.26, 28, 64, 224], [m, 70, 130, 255], [0.70, 20, 40, 184], [0.88, 30, 74, 230], [0.955, 70, 170, 255], [1, 150, 236, 255]];
+      for (var k = 1; k < S.length; k++) if (u <= S[k][0]) { var a = S[k - 1], b = S[k], f = (u - a[0]) / Math.max(1e-6, b[0] - a[0]); return [Math.round(a[1] + (b[1] - a[1]) * f), Math.round(a[2] + (b[2] - a[2]) * f), Math.round(a[3] + (b[3] - a[3]) * f)]; }
+      return [150, 236, 255];
+    }
     function drawRings(front, t, R, cx, cy) {
       for (var s = 0; s < RINGS.length; s++) {
         var r = RINGS[s], n = 110, th0 = ringTh(r, t, s), span = r.span * Math.PI, breath = 1 + 0.10 * Math.sin(t * 0.0016 + s * 1.7);
         var outer = [], inner = [];
         for (var j = 0; j <= n; j++) {
-          var u = j / n, th = th0 + u * span, wv = r.w * breath * Math.pow(Math.sin(Math.PI * Math.pow(u, 0.62)), 1.05);
+          var u = j / n, th = th0 + u * span, wv = r.w * breath * Math.pow(Math.sin(Math.PI * Math.pow(u, 1.9)), 0.9);
           outer.push(ringPt(r, th, wv * 0.5, R, cx, cy)); inner.push(ringPt(r, th, -wv * 0.5, R, cx, cy));
         }
-        var j0 = 0, a0 = outer[0], a1 = outer[n];
+        var j0 = 0, sh0 = 0.5 + 0.12 * Math.sin(t * 0.0013 + s * 1.9);
         while (j0 <= n) {
           if (outer[j0].f !== front) { j0++; continue; }
           var j1 = j0; while (j1 + 1 <= n && outer[j1 + 1].f === front) j1++;
-          if (j1 > j0) {
-            var g = ctx.createLinearGradient(a1.x, a1.y, a0.x, a0.y), al = front ? 1 : 0.62, sh = 0.30 + 0.40 * (0.5 + 0.5 * Math.sin(t * 0.0013 + s * 1.9));
-            g.addColorStop(0, "rgba(120,225,255," + al * 0.55 + ")"); g.addColorStop(0.14, "rgba(60,150,255," + al + ")");
-            g.addColorStop(0.42, "rgba(26,56,208," + al + ")"); g.addColorStop(Math.min(.9, sh + 0.12), "rgba(70,150,255," + al + ")");
-            g.addColorStop(0.82, "rgba(40,110,240," + al * 0.9 + ")"); g.addColorStop(1, "rgba(51,213,251," + al * 0.35 + ")");
-            ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(outer[j0].x, outer[j0].y);
-            for (var q = j0 + 1; q <= j1; q++) ctx.lineTo(outer[q].x, outer[q].y);
-            for (q = j1; q >= j0; q--) ctx.lineTo(inner[q].x, inner[q].y);
-            ctx.closePath(); ctx.fill();
-            if (front) { ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(inner[j0].x, inner[j0].y); for (q = j0 + 1; q <= j1; q++) ctx.lineTo(inner[q].x, inner[q].y); ctx.stroke(); }
+          for (var q = j0; q < j1; q++) {
+            var uu = (q + 0.5) / n, c = ringCol(uu, sh0), al = front ? 1 : 0.93, col = "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + al + ")";
+            ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 0.7; ctx.beginPath();
+            ctx.moveTo(outer[q].x, outer[q].y); ctx.lineTo(outer[q + 1].x, outer[q + 1].y); ctx.lineTo(inner[q + 1].x, inner[q + 1].y); ctx.lineTo(inner[q].x, inner[q].y); ctx.closePath(); ctx.fill(); ctx.stroke();
           }
+          if (front && j1 > j0) { ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(inner[j0].x, inner[j0].y); for (q = j0 + 1; q <= j1; q++) ctx.lineTo(inner[q].x, inner[q].y); ctx.stroke(); }
           j0 = j1 + 1;
         }
       }
