@@ -1,0 +1,4 @@
+# Configuration facultative pour Pages CMS (https://pagescms.org) : interface web pour déposer des fichiers dans le dépôt.
+media:
+  input: documents
+  output: /documents

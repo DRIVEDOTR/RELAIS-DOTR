@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Le Relais DOTR · Configurer l'espace équipe</title>
+<style>
+:root{--blue:#2B47F6;--night:#112A45;--yellow:#FFD43D;--cyan:#33D5FB;--line:#DEE6F5;--muted:#5A6B84}
+*{box-sizing:border-box}
+body{margin:0;font-family:Poppins,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--night);background:linear-gradient(180deg,#EDF3FF,#F8FAFF);min-height:100vh;line-height:1.55}
+.w{max-width:760px;margin:0 auto;padding:32px 20px 70px}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 6px}h1 span{color:var(--blue)}
+p.lead{color:var(--muted);margin:0 0 22px}
+.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px 24px;box-shadow:0 6px 18px -10px rgba(17,42,69,.3);margin-top:18px}
+h2{font-size:17px;margin:0 0 10px}
+ol{padding-left:20px;margin:8px 0}li{margin:5px 0;font-size:14.5px}
+label{display:block;font-size:13px;font-weight:600;margin:14px 0 5px}
+input{width:100%;font:inherit;font-size:14.5px;padding:10px 13px;border:1.5px solid var(--line);border-radius:12px;background:#FAFBFF}
+input:focus{outline:0;border-color:var(--cyan);box-shadow:0 0 0 4px rgba(51,213,251,.22)}
+button{font:inherit;font-weight:600;font-size:14.5px;border-radius:14px;padding:11px 20px;border:1.5px solid var(--blue);background:#fff;color:var(--blue);cursor:pointer}
+button.pri{background:linear-gradient(135deg,var(--blue),#4A67FF);color:#fff;border-color:transparent}
+button[disabled]{opacity:.5}
+code{background:#EEF2FF;color:#1A31C9;padding:2px 7px;border-radius:7px;font-size:13px}
+.code{font:600 20px/1.3 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;background:#F3F6FD;border:1.5px dashed #B9CBF3;border-radius:12px;padding:12px 14px;word-break:break-all}
+.note{background:#FFF8DB;border-left:4px solid var(--yellow);border-radius:12px;padding:10px 14px;font-size:13.5px;margin-top:12px}
+.err{background:#FDECEE;color:#6B1423;border-radius:12px;padding:10px 14px;font-size:13.5px;margin-top:12px}
+.ok{background:#DFF3E8;color:#14532D;border-radius:12px;padding:10px 14px;font-size:13.5px;margin-top:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+textarea{width:100%;min-height:150px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;border:1.5px solid var(--line);border-radius:12px;padding:10px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="w">
+<h1>Le Relais <span>DOTR</span> · espace équipe</h1>
+<p class="lead">Cette page prépare les codes d'accès et le fichier <code>acces.json</code>. Tout se passe dans votre navigateur : rien n'est envoyé nulle part, sauf un contrôle du jeton auprès de GitHub.</p>
+
+<div class="card"><h2>1 · Créer le jeton d'accès sur GitHub</h2>
+<ol>
+<li>Sur github.com : votre photo ▸ <b>Settings</b> ▸ <b>Developer settings</b> ▸ <b>Personal access tokens</b> ▸ <b>Fine-grained tokens</b> ▸ <b>Generate new token</b>.</li>
+<li>Nom : <i>Relais DOTR</i>. Durée : la plus longue possible (notez la date, il faudra le renouveler).</li>
+<li><b>Repository access</b> ▸ <i>Only select repositories</i> ▸ choisissez uniquement le dépôt du site.</li>
+<li><b>Permissions ▸ Repository permissions ▸ Contents : Read and write</b> (rien d'autre).</li>
+<li>Générez, puis copiez le jeton (commence par <code>github_pat_</code>).</li>
+</ol></div>
+
+<div class="card"><h2>2 · Générer les codes</h2>
+<label for="repo">Dépôt GitHub (compte/nom)</label><input id="repo" placeholder="docteurvilleminot/relais-dotr" autocomplete="off">
+<label for="br">Branche</label><input id="br" value="main" autocomplete="off">
+<label for="tok">Jeton d'accès (github_pat_…)</label><input id="tok" type="password" autocomplete="off" spellcheck="false">
+<div class="row"><button class="pri" id="go">Générer les codes et le fichier</button></div>
+<div id="msg"></div></div>
+
+<div class="card" id="res" hidden><h2>3 · Vos codes (à noter maintenant)</h2>
+<p style="margin:0 0 6px;font-size:14px"><b>Code contributeur</b> · ajouter et remplacer des documents (à donner aux deux personnes de l'équipe communication) :</p>
+<div class="code" id="c1"></div>
+<p style="margin:16px 0 6px;font-size:14px"><b>Code administrateur</b> · en plus : supprimer (à garder pour vous) :</p>
+<div class="code" id="c2"></div>
+<div class="note">Ces codes ne sont affichés qu'une fois et ne sont pas enregistrés. Notez-les dans un gestionnaire de mots de passe. Si vous les perdez, relancez cette page.</div>
+<h2 style="margin-top:20px">4 · Déposer le fichier</h2>
+<ol><li>Cliquez sur <b>Télécharger acces.json</b>.</li><li>Sur GitHub, dans le dossier <code>data</code> du dépôt : <b>Add file ▸ Upload files</b>, déposez-le (il remplace l'ancien) puis <b>Commit changes</b>.</li><li>Attendez 1 à 3 minutes : les boutons « Ajouter un document » fonctionnent.</li></ol>
+<div class="row"><button class="pri" id="dl">Télécharger acces.json</button><button id="cp">Copier le contenu</button></div>
+<textarea id="json" readonly style="margin-top:12px"></textarea>
+</div>
+</div>
+<script>
+(function(){
+  var enc=new TextEncoder(), N=600000, AL="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  function b64(u){var s="";for(var i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
+  function code(){var r=crypto.getRandomValues(new Uint8Array(20)),o=[];for(var i=0;i<20;i++)o.push(AL[r[i]%32]);return [o.slice(0,4),o.slice(4,8),o.slice(8,12),o.slice(12,16),o.slice(16,20)].map(function(g){return g.join("")}).join("-")}
+  function norm(c){return c.replace(/[^A-Z0-9]/g,"")}
+  async function seal(text,c){
+    var salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+    var km=await crypto.subtle.importKey("raw",enc.encode(norm(c)),"PBKDF2",false,["deriveKey"]);
+    var k=await crypto.subtle.deriveKey({name:"PBKDF2",salt:salt,iterations:N,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["encrypt"]);
+    var ct=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},k,enc.encode(text));
+    return {s:b64(salt),iv:b64(iv),c:b64(new Uint8Array(ct))};
+  }
+  var $=function(i){return document.getElementById(i)}, msg=$("msg");
+  $("go").onclick=async function(){
+    msg.innerHTML="";
+    var repo=$("repo").value.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\.git$/,"").replace(/\/$/,""), br=$("br").value.trim()||"main", tok=$("tok").value.trim();
+    if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){msg.innerHTML='<div class="err">Dépôt invalide. Format attendu : compte/nom-du-depot.</div>';return}
+    if(tok.length<20){msg.innerHTML='<div class="err">Collez le jeton d\'accès complet.</div>';return}
+    if(!(window.crypto&&crypto.subtle)){msg.innerHTML='<div class="err">Ce navigateur ne permet pas le chiffrement depuis un fichier local. Essayez Chrome ou Safari récent.</div>';return}
+    $("go").disabled=true;$("go").textContent="Vérification du jeton…";
+    try{
+      var r=await fetch("https://api.github.com/repos/"+repo,{headers:{Accept:"application/vnd.github+json",Authorization:"Bearer "+tok}});
+      var j=await r.json().catch(function(){return {}});
+      if(!r.ok) throw new Error(r.status===404?"Dépôt introuvable avec ce jeton : vérifiez le nom du dépôt et que le jeton est bien limité à ce dépôt.":(j.message||("Erreur "+r.status)));
+      if(!j.permissions||!j.permissions.push) throw new Error("Ce jeton n'a pas le droit d'écrire dans le dépôt : choisissez « Contents : Read and write ».");
+      $("go").textContent="Chiffrement…";
+      var c1=code(),c2=code();
+      var out={v:1,repo:repo,branch:br,n:N,contrib:await seal(tok,c1),admin:await seal(tok,c2)};
+      $("c1").textContent=c1;$("c2").textContent=c2;$("json").value=JSON.stringify(out,null,1);$("res").hidden=false;
+      msg.innerHTML='<div class="ok">Jeton valide. Codes générés.</div>';
+      $("res").scrollIntoView({behavior:"smooth"});
+    }catch(e){msg.innerHTML='<div class="err">'+String(e.message||e).replace(/</g,"&lt;")+'</div>'}
+    $("go").disabled=false;$("go").textContent="Générer les codes et le fichier";
+  };
+  $("dl").onclick=function(){var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([$("json").value],{type:"application/json"}));a.download="acces.json";a.click()};
+  $("cp").onclick=function(){$("json").select();document.execCommand("copy");this.textContent="Copié"};
+})();
+</script>
+</body>
+</html>
