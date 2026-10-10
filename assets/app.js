@@ -47,6 +47,8 @@
     edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
     upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
     eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+    tree: '<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="2" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M5 16v-4h14v4"/>',
+    unlock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
     lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
     compass: '<circle cx="12" cy="12" r="10"/><path d="m16.2 7.8-2.1 6.3-6.3 2.1 2.1-6.3z"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
@@ -74,6 +76,10 @@
     byId[d.id] = d;
   });
   var VT = { pdf: "pdf", doc: "word", docx: "word", xls: "excel", xlsx: "excel", xlsm: "excel", csv: "excel", ppt: "ppt", pptx: "ppt", png: "image", jpg: "image", jpeg: "image", mp4: "video" };
+  function vaultBtns() {
+    var op = !!(window.HubCoffre && window.HubCoffre.isOpen());
+    $$(".vault-btn").forEach(function (x) { x.classList.toggle("on", op); x.innerHTML = ic(op ? "unlock" : "lock") + "<span>" + (op ? "Déverrouillé" : "Verrouillé") + "</span>"; x.title = op ? "Documents sécurisés déverrouillés (cliquer pour verrouiller)" : "Déverrouiller les documents sécurisés"; x.setAttribute("aria-label", "Documents sécurisés : " + (op ? "déverrouillé" : "verrouillé")); });
+  }
   function setVault(items) {
     for (var i = docs.length - 1; i >= 0; i--) if (docs[i].vault) { delete byId[docs[i].id]; docs.splice(i, 1); }
     (items || []).forEach(function (it) {
@@ -83,7 +89,7 @@
       d.hay = norm([d.title, d.desc, d.rubLabel, d.sousLabel, it.f || ""].join(" "));
       docs.push(d); byId[d.id] = d;
     });
-    var b = document.querySelector(".vault-btn"); $$(".vault-btn").forEach(function (x) { x.classList.toggle("on", !!(window.HubCoffre && window.HubCoffre.isOpen())); x.title = window.HubCoffre && window.HubCoffre.isOpen() ? "Documents sécurisés déverrouillés (cliquer pour verrouiller)" : "Déverrouiller les documents sécurisés"; });
+    vaultBtns();
     if (!/^#\/d\//.test(location.hash)) route();
   }
   function prettySous(s) { s = String(s || "").split("/").pop().replace(/^\d+[-_ ]+/, "").replace(/[-_]+/g, " "); return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -185,7 +191,7 @@
     return { input: input, set: function (v) { input.value = v; } };
   }
   function searchBox(id, ph, kbd) {
-    return '<div class="sx" id="' + id + '"><label class="sx-box">' + ic("search") + '<span class="sr">Rechercher</span><input type="search" autocomplete="off" placeholder="' + esc(ph) + '">' + (kbd ? "<kbd>/</kbd>" : "") + '</label><button type="button" class="vault-btn" aria-label="Documents sécurisés" title="Déverrouiller les documents sécurisés">' + ic("lock") + '</button><div class="sx-pop" hidden></div></div>';
+    return '<div class="sx" id="' + id + '"><label class="sx-box">' + ic("search") + '<span class="sr">Rechercher</span><input type="search" autocomplete="off" placeholder="' + esc(ph) + '">' + (kbd ? "<kbd>/</kbd>" : "") + '</label><button type="button" class="vault-btn" aria-label="Documents sécurisés : verrouillé" title="Déverrouiller les documents sécurisés">' + ic("lock") + '<span>Verrouillé</span></button><div class="sx-pop" hidden></div></div>';
   }
 
   /* ---------- structure fixe ---------- */
@@ -194,7 +200,7 @@
     document.title = (SITE.name || "Hub") + " — Docs On The Road";
     $("#top").innerHTML = '<div class="wrap"><a class="brand" href="#/" aria-label="Accueil"><img class="b-light" src="assets/img/globe-blanc.png" alt=""><img class="b-dark" src="assets/img/favicon.png" alt=""><span>' + esc(SITE.name || "Hub") + "<small>Docs On The Road</small></span></a>" +
       searchBox("sx-top", "Rechercher un document…", false).replace('class="sx"', 'class="sx top-search"') +
-      '<nav class="nav" aria-label="Navigation"><a href="#/">' + ic("home") + '<span>Accueil</span></a><a href="#/route">' + ic("compass") + '<span>La Route</span></a><a href="#/guide">' + ic("book") + "<span>Guide</span></a></nav></div>";
+      '<nav class="nav" aria-label="Navigation"><a href="#/">' + ic("home") + '<span>Accueil</span></a><a href="#/route">' + ic("compass") + '<span>La Route</span></a><a href="#/index">' + ic("tree") + '<span>Index</span></a><a href="#/guide">' + ic("book") + "<span>Guide</span></a></nav></div>";
     topSearch = bindSearch($("#sx-top"));
     var repo = repoUrl();
     var ft = $("#foot"); if (ft) ft.remove();
@@ -220,7 +226,7 @@
     fxOpacity();
   }
   function fxOpacity() {
-    if (!fx) return; var h = document.body.classList.contains("home"), y = window.scrollY || 0, lo = h ? 0.26 : 0.19;
+    if (!fx) return; var h = document.body.classList.contains("home"), y = window.scrollY || 0, lo = h ? 0.5 : 0.38;
     var o = h ? 1 - (1 - lo) * Math.min(1, y / 520) : lo; fx.style.opacity = o.toFixed(3);
   }
   function setMode(home) {
@@ -234,7 +240,7 @@
   var app = $("#app"), stopGlobe = null, lastRoute = null;
   function mount(html, home) {
     if (stopGlobe) { stopGlobe(); stopGlobe = null; }
-    app.innerHTML = '<div class="page">' + html + "</div>"; setMode(!!home);
+    app.innerHTML = '<div class="page">' + html + "</div>"; setMode(!!home); vaultBtns();
   }
   function profil() { return store.get("hub.profil") || ""; }
 
@@ -313,6 +319,64 @@
       '<section class="s"><div class="s-h"><div><h2>Derniers documents</h2><p>Les plus récemment mis à jour</p></div></div><div class="grid">' + last.map(function (d) { return card(d, { crumb: true }); }).join("") + "</div></section></div>", true);
     var sb = bindSearch($("#sx-hero"), true);
     $$(".chip[data-p]").forEach(function (b) { b.addEventListener("click", function () { var v = b.dataset.p === profil() ? "" : b.dataset.p; store.set("hub.profil", v); home(); }); });
+  }
+
+
+  /* ---------- Index / plan du site ---------- */
+  function sommaire() {
+    var state = { q: "", view: "rub" };
+    mount('<header class="phead"><div class="wrap"><div class="crumbs"><a href="#/">Accueil</a>' + ic("chevron") + '<span>Index</span></div><h1><span class="hi bc-blue">' + ic("tree") + '</span>Index du site</h1><p>Le plan de tous les documents, organisé comme le site : <b>onglet › dossier › document</b>. Cliquez sur un titre pour ouvrir le document, ou téléchargez l\'index complet en tableau.</p></div></header>' +
+      '<div class="wrap"><div class="tools" id="itools"><button class="fchip" data-v="rub" aria-pressed="true">Par onglet</button><button class="fchip" data-v="route" aria-pressed="false">Par étape de la Route</button>' +
+      '<label class="local">' + ic("search") + '<span class="sr">Filtrer</span><input id="iq" type="search" placeholder="Filtrer l\'index…"></label>' +
+      '<button class="btn sm" id="iopen" type="button">Tout déplier</button><button class="btn sm" id="iclose" type="button">Tout replier</button><button class="btn sm pri" id="icsv" type="button">' + ic("download") + 'Télécharger l\'index (Excel)</button></div>' +
+      '<div id="imap"></div><div id="itree"></div></div>');
+    function match(d) { var q = state.q ? tokens(state.q) : []; return q.every(function (t) { return d.hay.indexOf(t) >= 0; }); }
+    function li(d) { var t = TYPE[d.type] || TYPE.autre; return '<li><a href="#/d/' + enc(d.id) + '">' + ic(t.icon) + '<span>' + hl(d.title, state.q) + '</span>' + (d.vault ? '<i class="ilk" title="Document sécurisé">' + ic("lock") + "</i>" : "") + '<em class="badge b-' + d.type + '">' + (d.ext ? esc(d.ext.toUpperCase()) : t.label) + "</em></a></li>"; }
+    function structure() {
+      return RUBS.map(function (r) {
+        var l = inRub(r.id), order = Object.keys(r.sous || {}), gs = {};
+        l.forEach(function (d) { (gs[d.sous] = gs[d.sous] || []).push(d); });
+        var keys = Object.keys(gs).sort(function (a, b) { var ia = order.indexOf(a), ib = order.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b); });
+        return { r: r, l: l, gs: gs, keys: keys };
+      }).filter(function (x) { return x.l.length; });
+    }
+    function draw() {
+      var st = structure(), f = !!state.q, out = "", map = "";
+      if (state.view === "rub") {
+        map = '<div class="imap"><div class="imap-root">' + ic("tree") + "<b>" + esc(SITE.name || "Le Relais DOTR") + "</b><small>" + docs.length + ' documents</small></div><div class="imap-cols">' + st.map(function (x) {
+          return '<div class="imap-col bc-' + (x.r.color || "blue") + '"><a class="imap-h" href="#i-' + esc(x.r.id) + '" data-go="' + esc(x.r.id) + '">' + ic(x.r.icon || "folder") + "<b>" + esc(x.r.label) + "</b><em>" + x.l.length + "</em></a><ul>" + x.keys.map(function (k) { return "<li>" + esc((x.r.sous || {})[k] || (x.gs[k][0] && x.gs[k][0].sousLabel) || "Documents") + "<em>" + x.gs[k].length + "</em></li>"; }).join("") + "</ul></div>";
+        }).join("") + "</div></div>";
+        st.forEach(function (x) {
+          var any = 0, body = x.keys.map(function (k) {
+            var m = x.gs[k].filter(match); if (!m.length) return ""; any += m.length;
+            var lab = (x.r.sous || {})[k] || (x.gs[k][0] && x.gs[k][0].sousLabel) || "Documents";
+            return '<details class="tr-s"' + (f ? " open" : "") + "><summary><span>" + ic("folder") + esc(lab) + "</span><em>" + m.length + '</em></summary><ul class="tr-l">' + m.map(li).join("") + "</ul></details>";
+          }).join("");
+          if (!any) return;
+          out += '<details class="tr-r bc-' + (x.r.color || "blue") + '" id="i-' + esc(x.r.id) + '"' + (f ? " open" : "") + "><summary><span class=\"tr-ic\">" + ic(x.r.icon || "folder") + "</span><b>" + esc(x.r.label) + "</b><em>" + any + '</em><a class="tr-go" href="#/r/' + enc(x.r.id) + '">Ouvrir l\'onglet ' + ic("arrow") + "</a></summary>" + (x.r.desc ? '<p class="tr-d">' + esc(x.r.desc) + "</p>" : "") + '<div class="tr-b">' + body + "</div></details>";
+        });
+      } else {
+        out = RELAIS.map(function (r) {
+          var m = relaisDocs(r).filter(match); if (!m.length) return "";
+          return '<details class="tr-r bc-' + (r.color || "blue") + '"' + (f ? " open" : "") + '><summary><span class="tr-ic">' + ic(r.icon || "compass") + "</span><b>Relais " + r.n + " · " + esc(r.label) + "</b><em>" + m.length + '</em><a class="tr-go" href="#/relais/' + enc(r.id) + '">Ouvrir l\'étape ' + ic("arrow") + '</a></summary><div class="tr-b"><ul class="tr-l">' + m.map(li).join("") + "</ul></div></details>";
+        }).join("");
+      }
+      $("#imap").innerHTML = f ? "" : map;
+      $("#itree").innerHTML = out || '<div class="empty">Aucun document ne correspond à ce filtre.</div>';
+    }
+    function csv() {
+      var q = function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }, base = location.href.split("#")[0], rows = [["Onglet", "Dossier", "Titre", "Type", "Format", "Taille", "Mis à jour", "Description", "Lien"]];
+      structure().forEach(function (x) { x.keys.forEach(function (k) { x.gs[k].forEach(function (d) { rows.push([x.r.label, d.sousLabel, d.title + (d.vault ? " (sécurisé)" : ""), (TYPE[d.type] || TYPE.autre).label, d.ext ? d.ext.toUpperCase() : "", meta(d), d.date || "", d.desc || "", d.vault ? "" : (d.url || base + href(d.path))]); }); }); });
+      var blob = new Blob(["﻿" + rows.map(function (r) { return r.map(q).join(";"); }).join("\r\n")], { type: "text/csv;charset=utf-8" });
+      var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "index-relais-dotr.csv"; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 3000);
+    }
+    $$("#itools [data-v]").forEach(function (b) { b.addEventListener("click", function () { state.view = b.dataset.v; $$("#itools [data-v]").forEach(function (x) { x.setAttribute("aria-pressed", x === b); }); draw(); }); });
+    $("#iq").addEventListener("input", function (e) { state.q = e.target.value; draw(); });
+    $("#iopen").addEventListener("click", function () { $$("#itree details").forEach(function (d) { d.open = true; }); });
+    $("#iclose").addEventListener("click", function () { $$("#itree details").forEach(function (d) { d.open = false; }); });
+    $("#icsv").addEventListener("click", csv);
+    $("#imap").addEventListener("click", function (e) { var a = e.target.closest("[data-go]"); if (!a) return; e.preventDefault(); var el = document.getElementById("i-" + a.dataset.go); if (el) { el.open = true; el.scrollIntoView({ behavior: "smooth", block: "start" }); } });
+    draw();
   }
 
   function rubric(id, focus) {
@@ -404,21 +468,6 @@
 <div class="gcard"><h3><span class="gi">${ic("folder")}</span>Un nouvel onglet, une nouvelle étape de la route</h3>
 <p>Un nouveau dossier à l'intérieur d'un onglet se crée tout seul (« Nouveau dossier… » dans la fenêtre d'ajout). En revanche, <b>un nouvel onglet</b> (une nouvelle bulle) ou un <b>nouveau relais</b> sur la route se demande à Claude, qui adapte le site.</p></div>
 
-<div class="gcard"><h3><span class="gi">${ic("tools")}</span>Première mise en place (administrateur, une seule fois)</h3>
-<p>Les boutons « Ajouter / Remplacer / Supprimer » fonctionnent grâce à un <b>jeton d'accès GitHub</b> conservé chiffré dans le site et ouvert uniquement par les codes. Il faut le créer une fois :</p>
-<ol><li>Sur GitHub${lk} : <i>Settings ▸ Developer settings ▸ Fine-grained tokens ▸ Generate new token</i>. Limitez-le à <b>ce dépôt uniquement</b>, droit <b>Contents : Read and write</b>, durée maximale.</li>
-<li>Ouvrez le fichier <code>outils/configurer-acces.html</code> du dossier du site dans votre navigateur (double-clic), collez le jeton : la page génère deux codes (contributeur, administrateur) et le fichier <code>data/acces.json</code>.</li>
-<li>Déposez ce fichier dans le dossier <code>data</code> du dépôt GitHub, remplacez l'ancien si besoin, puis communiquez les codes par un canal sûr.</li></ol>
-<div class="note"><b>À savoir :</b> la séparation contributeur / administrateur est une protection d'usage (le bouton Supprimer n'est montré qu'avec le code administrateur). Ne donnez le code qu'à des personnes de confiance. En cas de départ, créez un nouveau jeton et de nouveaux codes : l'ancien jeton se révoque en un clic sur GitHub.</div></div>
-
-<div class="gcard"><h3><span class="gi">${ic("edit")}</span>Autre méthode : directement dans GitHub</h3>
-<p>Toujours possible : ouvrez le dépôt, entrez dans <code>documents</code> puis dans le bon dossier, <b>Add file ▸ Upload files</b>, <b>Commit changes</b>. Pour un fichier de plus de 25 Mo, utilisez GitHub Desktop. Un lien externe (YouTube, Google Sheets) s'ajoute dans <code>data/liens.json</code>.</p></div>
-
-<div class="gcard"><h3><span class="gi">${ic("help")}</span>Bon à savoir</h3>
-<ul><li>Le site n'est pas référencé par Google (balise « noindex »), mais toute personne qui connaît l'adresse peut le consulter tant qu'il est public.</li>
-<li><b>Ne déposez jamais de données personnelles</b> (RPPS, adresses, dates de naissance, formulaires signés, dossiers patients) ni de <b>mots de passe</b> : n'importe quel visiteur pourrait les lire.</li>
-<li>Les fichiers sont publiés tels quels : vérifiez la version avant de déposer.</li></ul></div>
-
 </div></div>`);
   }
 
@@ -432,6 +481,7 @@
     if (d.type === "pdf" && !coarse) pv = '<iframe title="' + esc(d.title) + '" src="' + esc(u) + '#view=FitH&navpanes=0"></iframe>';
     else if (d.type === "video") pv = '<video controls preload="metadata" playsinline ' + (d.thumb ? 'poster="' + esc(d.thumb) + '" ' : "") + 'src="' + esc(u) + '"></video>';
     else if (d.type === "image") pv = '<img src="' + esc(u) + '" alt="' + esc(d.title) + '">';
+    else if (window.HubPreview && HubPreview.can(d.ext)) pv = '<div class="v-prev" id="vprev"></div>';
     else pv = '<div class="v-na"><div class="big ' + (d.thumb ? "" : "tile t-" + d.type) + '">' + (d.thumb ? '<img src="' + esc(d.thumb) + '" alt="">' : ic(t.icon)) + "</div><b>" + (d.type === "lien" ? "Ce document est un lien externe" : (d.type === "pdf" ? "Aperçu intégré non disponible sur mobile" : "Aperçu non disponible pour ce format")) + "</b><p>" + (d.type === "lien" ? "Il s'ouvrira dans un nouvel onglet." : "Téléchargez-le pour l'ouvrir dans " + (d.type === "word" ? "Word" : d.type === "excel" ? "Excel" : d.type === "ppt" ? "PowerPoint" : "son application") + ".") + "</p></div>";
     var sib = docs.filter(function (x) { return x.rub === d.rub && x.sous === d.sous; }).sort(cmp);
     var link = location.href.split("#")[0] + "#/d/" + enc(d.id);
@@ -458,6 +508,7 @@
     lastFocus = document.activeElement; var x = $(".v-x", viewer); if (x) x.focus();
     $$("[data-close]", viewer).forEach(function (e) { e.addEventListener("click", closeViaNav); });
     $$("[data-copy]", viewer).forEach(function (b) { b.addEventListener("click", function () { copy(b.dataset.copy); }); });
+    if ($("#vprev")) HubPreview.render($("#vprev"), { url: u }, d.ext);
     if (window.HubTeam) window.HubTeam.decorate();
   }
   var suppress = false;
@@ -486,6 +537,7 @@
     else if ((m = h.match(/^\/r\/([^/]+)(?:\/(.+))?$/))) rubric(m[1], m[2]);
     else if ((m = h.match(/^\/relais\/(.+)$/))) relaisPage(m[1]);
     else if (h === "/route") routePage();
+    else if (h === "/index") sommaire();
     else if ((m = h.match(/^\/p\/(.+)$/))) parcours(m[1]);
     else if ((m = h.match(/^\/recherche\/(.*)$/))) results(m[1]);
     else if (h === "/guide") guide();

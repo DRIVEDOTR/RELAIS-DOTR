@@ -95,6 +95,7 @@
       if (x === "pdf") body.innerHTML = '<iframe title="' + esc(it.t) + '" src="' + ovUrl + '"></iframe>';
       else if (x === "png" || x === "jpg" || x === "jpeg") body.innerHTML = '<div class="cv-img"><img alt="' + esc(it.t) + '" src="' + ovUrl + '"></div>';
       else if (x === "mp4") body.innerHTML = '<video controls autoplay src="' + ovUrl + '"></video>';
+      else if (window.HubPreview && HubPreview.can(x)) { body.innerHTML = '<div class="v-prev cv-prev"></div>'; bl.arrayBuffer().then(function (ab) { HubPreview.render(body.firstChild, { buffer: ab }, x); }); }
       else body.innerHTML = '<div class="cv-load"><b>Aperçu indisponible pour ce type de fichier.</b><br>Cliquez sur « Télécharger » pour l\'ouvrir dans son application (' + esc(x.toUpperCase()) + ').</div>';
     }).catch(function (e) { if (body) body.innerHTML = '<div class="cv-load err">' + esc(e && e.name === "OperationError" ? "Déchiffrement impossible : le fichier est corrompu ou le code ne correspond plus." : (e.message || e)) + "</div>"; });
   }
