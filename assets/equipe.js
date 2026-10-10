@@ -144,21 +144,29 @@
 
   /* ---------- ajouter ---------- */
   function addDialog(rubId, sousPreset) {
-    var app = A(), r = app.rubById[rubId]; if (!r) return;
+    var app = A(), secureOnly = rubId === "__coffre", r = secureOnly ? { label: "Coffre sécurisé", sous: {} } : app.rubById[rubId]; if (!r) return;
     var sous = {}; Object.keys(r.sous || {}).forEach(function (k) { sous[k] = r.sous[k]; });
-    app.docs.forEach(function (d) { if (d.rub === rubId && d.sous && !sous[d.sous]) sous[d.sous] = d.sousLabel; });
+    if (!secureOnly) app.docs.forEach(function (d) { if (d.rub === rubId && d.sous && !sous[d.sous]) sous[d.sous] = d.sousLabel; });
+    var cof = window.HubCoffre, cofOpen = !!(cof && cof.isOpen()), cofSaved = !!(cof && cof.hasKeyOrSaved()), gl = (cof && cof.groups ? cof.groups() : []);
+    var gopts = gl.map(function (g) { return '<option value="' + esc(g) + '">'; }).join("");
     var opts = Object.keys(sous).map(function (k) { return '<option value="' + esc(k) + '"' + (k === sousPreset ? " selected" : "") + ">" + esc(sous[k]) + "</option>"; }).join("");
-    var m = openModal("<h2>Ajouter un document</h2><p class=\"sub\">Onglet « " + esc(r.label) + " ». Le document sera visible par tout le monde d'ici 1 à 3 minutes.</p>" +
+    var m = openModal("<h2>Ajouter un document</h2><p class=\"sub\" id=\"msub\">" + (secureOnly ? "Coffre sécurisé : le fichier sera chiffré avant l'envoi. Il ne sera lisible qu'avec le code du coffre." : "Onglet « " + esc(r.label) + " ». Le document sera visible par tout le monde d'ici 1 à 3 minutes.") + "</p>" +
       '<div class="drop" id="mdrop" tabindex="0">' + app.ic("upload") + '<b>Glissez le fichier ici ou cliquez pour le choisir</b>PDF, Word, Excel, PowerPoint, image ou vidéo MP4 · 25 Mo maximum</div><input type="file" id="mfile" hidden accept=".pdf,.doc,.docx,.xls,.xlsx,.xlsm,.csv,.ppt,.pptx,.png,.jpg,.jpeg,.mp4"><div id="mfn"></div>' +
-      '<label class="f" for="msous">Dossier</label><select id="msous">' + opts + '<option value="__new">+ Nouveau dossier…</option></select><input type="text" id="mnew" placeholder="Nom du nouveau dossier" hidden style="margin-top:8px">' +
+      '<label class="secsw" for="msec"><input type="checkbox" id="msec"' + (secureOnly ? " checked disabled" : "") + '><span><b>' + app.ic("lock") + 'Sécuriser (chiffrer) ce document</b><small>Coché : envoyé dans le coffre, illisible sans le code. Décoché : publié normalement, visible par tous.</small></span></label>' +
+      '<div id="msecbox" hidden><label class="f" for="mgrp">Dossier dans le coffre</label><input type="text" id="mgrp" list="mgrpl" placeholder="Ex. Droit à l\'image" value="' + (gl[0] ? "" : "") + '"><datalist id="mgrpl">' + gopts + '</datalist>' +
+      '<div id="mcodebox"' + (cofOpen || cofSaved ? " hidden" : "") + '><label class="f" for="mcc">Code du coffre</label><input type="password" id="mcc" autocomplete="off" spellcheck="false" placeholder="Code du coffre"></div></div>' +
+      '<div id="mnormal"><label class="f" for="msous">Dossier</label><select id="msous">' + opts + '<option value="__new">+ Nouveau dossier…</option></select><input type="text" id="mnew" placeholder="Nom du nouveau dossier" hidden style="margin-top:8px"></div>' +
       '<label class="f" for="mtitle">Titre affiché</label><input type="text" id="mtitle" placeholder="Ex. Procédure de relance clients">' +
       '<label class="f" for="mdesc">Description (facultatif)</label><textarea id="mdesc" placeholder="À quoi sert ce document ?"></textarea>' +
       '<div id="merr"></div><div class="acts"><button class="btn" data-mclose type="button">Annuler</button><button class="btn pri" id="mgo" type="button">Ajouter</button></div>');
     var file = null, drop = m.querySelector("#mdrop"), inp = m.querySelector("#mfile"), ti = m.querySelector("#mtitle"), titleTouched = false, replaceOk = false;
     ti.addEventListener("input", function () { titleTouched = true; });
+    var sec = m.querySelector("#msec");
+    function syncSec() { var on = sec.checked; m.querySelector("#msecbox").hidden = !on; m.querySelector("#mnormal").hidden = on; if (!secureOnly) m.querySelector("#msub").textContent = on ? "Le fichier sera chiffré avant l'envoi et rangé dans le coffre. Il ne sera lisible qu'avec le code du coffre." : "Onglet « " + r.label + " ». Le document sera visible par tout le monde d'ici 1 à 3 minutes."; m.querySelector("#mgo").textContent = on ? "Chiffrer et ajouter" : "Ajouter"; }
+    sec.addEventListener("change", syncSec); syncSec();
     m.querySelector("#msous").addEventListener("change", function (e) { m.querySelector("#mnew").hidden = e.target.value !== "__new"; });
     function pick(f) {
-      var err = m.querySelector("#merr"); err.innerHTML = ""; replaceOk = false; m.querySelector("#mgo").textContent = "Ajouter";
+      var err = m.querySelector("#merr"); err.innerHTML = ""; replaceOk = false; syncSec();
       if (!f) return;
       if (!EXT[extOf(f.name)]) { err.innerHTML = '<div class="err">Ce type de fichier n\'est pas accepté (formats : PDF, Word, Excel, PowerPoint, images, MP4).</div>'; return; }
       if (f.size > MAX) { err.innerHTML = '<div class="err">Fichier trop volumineux (' + app.fmtSize(f.size) + '). Maximum : 25 Mo. Pour une vidéo longue, déposez-la sur YouTube (non répertoriée) et demandez l\'ajout du lien.</div>'; return; }
@@ -175,6 +183,17 @@
     go.addEventListener("click", function () {
       err.innerHTML = "";
       if (!file) { err.innerHTML = '<div class="err">Choisissez d\'abord un fichier.</div>'; return; }
+      if (sec.checked) {
+        var grp = m.querySelector("#mgrp").value.trim() || "Divers", code = (m.querySelector("#mcc") || {}).value || "", ttl = ti.value.trim() || prettyTitle(file.name), dsc = m.querySelector("#mdesc").value.trim();
+        if (!cofOpen && !code.trim() && !(cof && cof.hasKeyOrSaved())) { err.innerHTML = '<div class="err">Saisissez le code du coffre.</div>'; return; }
+        go.disabled = true; go.textContent = "Chiffrement et envoi…";
+        var saved = null; try { saved = window.sessionStorage.getItem("hub.cof"); } catch (x) {}
+        cof.addFile(file, { title: ttl, group: grp, desc: dsc }, code.trim() || saved).then(function () {
+          m.querySelector(".m-box").innerHTML = "<h2>Document chiffré et envoyé</h2><div class=\"okk\">« " + esc(ttl) + " » est dans le coffre (dossier « " + esc(grp) + " »). Il sera disponible pour tout le monde d'ici 1 à 3 minutes.</div><div class=\"acts\"><button class=\"btn pri\" id=\"mok\">Parfait</button></div>";
+          m.querySelector("#mok").addEventListener("click", function () { closeModal(); if (location.hash === "#/coffre" && cof.redraw) cof.redraw(); });
+        }).catch(function (e) { go.disabled = false; go.textContent = "Chiffrer et ajouter"; err.innerHTML = '<div class="err">' + esc(e && e.wrong ? "Code du coffre incorrect." : errMsg(e)) + "</div>"; });
+        return;
+      }
       var sv = m.querySelector("#msous").value, dir = sv;
       if (sv === "__new") { dir = slugDir(m.querySelector("#mnew").value); if (!dir) { err.innerHTML = '<div class="err">Donnez un nom au nouveau dossier.</div>'; return; } }
       var path = "documents/" + rubId + "/" + dir + "/" + safeName(file.name), title = ti.value.trim() || prettyTitle(file.name), desc = m.querySelector("#mdesc").value.trim();
@@ -281,7 +300,8 @@
     state: function () { return ready ? state() : { add: [], del: {} }; },
     pendingDocs: function (r) { return ready ? pendingDocs(r) : []; },
     decorate: decorate,
-    enabled: function () { return !!CFG; }
+    enabled: function () { return !!CFG; },
+    api: { token: function () { return TOKEN; }, role: function () { return ROLE; }, need: need, getFile: getFile, putFile: putFile, delFile: delFile, repo: function () { return CFG && CFG.repo; }, branch: function () { return CFG ? BR() : "main"; }, openModal: openModal, closeModal: closeModal, errMsg: errMsg, prettyTitle: prettyTitle, addDialog: function (r, s) { return addDialog(r, s); } }
   };
   function start(cfg) {
     CFG = cfg && cfg.repo && cfg.contrib && cfg.admin && cfg.n ? cfg : null;

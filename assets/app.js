@@ -46,6 +46,7 @@
     plus: '<path d="M12 5v14M5 12h14"/>',
     edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
     upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
+    eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
     lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
     compass: '<circle cx="12" cy="12" r="10"/><path d="m16.2 7.8-2.1 6.3-6.3 2.1 2.1-6.3z"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
@@ -266,7 +267,7 @@
       var n = docs.filter(function (d) { return d.rub === r.id; }).length; if (!n) return "";
       var dim = pf && (r.profils || []).length && r.profils.indexOf(pf) < 0;
       return '<a class="bw' + (dim ? " dim" : "") + '" href="#/r/' + enc(r.id) + '"><div class="bubble bc-' + (r.color || "blue") + '">' + ic(r.icon || "folder") + "<b>" + esc(r.label) + "</b><small class=\"bd\">" + esc(r.desc || "") + "</small><em>" + n + '</em></div><span class="sr">' + esc(r.desc || "") + "</span></a>";
-    }).join("");
+    }).join("") + '<a class="bw" href="#/coffre"><div class="bubble bc-vault">' + ic("lock") + '<b>Coffre</b><small class="bd">Documents sensibles chiffrés : formulaires nominatifs, signatures, répertoires. Code d\'accès requis.</small><em>Code requis</em></div><span class="sr">Documents sensibles, accessibles avec un code.</span></a>';
     var pc = PARCOURS.map(function (p) {
       var n = parcoursDocs(p).length; if (!n) return "";
       return '<a class="pcard" href="#/p/' + enc(p.id) + '"><span class="pi">' + ic(p.icon || "arrow") + "</span><span><b>" + esc(p.label) + "</b><span>" + esc(p.desc || "") + "</span></span></a>";
@@ -276,7 +277,7 @@
     var chips = PROFILS.map(function (p) { return '<button class="chip" type="button" data-p="' + esc(p.id) + '" aria-pressed="' + (pf === p.id) + '">' + esc(p.label) + "</button>"; }).join("");
     var rise = ""; for (var i = 0; i < 14; i++) { var s = 14 + Math.round(Math.random() * 70); rise += '<i style="left:' + Math.round(Math.random() * 100) + "%;width:" + s + "px;height:" + s + "px;animation-duration:" + (14 + Math.round(Math.random() * 22)) + "s;animation-delay:-" + Math.round(Math.random() * 30) + "s;--sx:" + (Math.round(Math.random() * 80) - 40) + 'px"></i>'; }
     var nm = esc(SITE.name || "Hub").replace(/(\S+)$/, "<span>$1</span>");
-    mount('<header class="hero"><div class="hero-bubbles" aria-hidden="true">' + rise + '</div><div class="hero-art" aria-hidden="true"><canvas id="globe"></canvas>' + (window.HubCompass ? window.HubCompass.art() : "") + '</div><div class="wrap">' +
+    mount('<header class="hero"><div class="hero-bubbles" aria-hidden="true">' + rise + '</div><div class="hero-art" aria-hidden="true"><canvas id="globe"></canvas>' + (window.HubCompass ? window.HubCompass.art() : "") + '<canvas id="globeF"></canvas></div><div class="wrap">' +
       '<h1>' + nm + '</h1><p class="slogan"><b>' + esc(SITE.slogan || "") + "</b><br>" + esc(SITE.baseline || "") + "</p>" +
       searchBox("sx-hero", window.innerWidth < 600 ? "Rechercher un document…" : "Que cherchez-vous ? convention, logo, CRM, tuto Healphi…", true) +
       '<div class="persona"><span>Je suis…</span>' + chips + "</div></div></header>" +
@@ -285,7 +286,7 @@
       '<section class="s"><div class="s-h"><div><h2>Je veux…</h2><p>Des parcours tout prêts pour une situation précise</p></div></div><div class="pgrid">' + pc + "</div></section>" +
       (ess.length ? '<section class="s"><div class="s-h"><div><h2>' + (pf ? "Les essentiels pour vous" : "Les essentiels") + "</h2><p>À connaître en priorité</p></div></div><div class=\"grid\">" + ess.slice(0, 8).map(function (d) { return card(d, { crumb: true, noStar: true }); }).join("") + "</div></section>" : "") +
       '<section class="s"><div class="s-h"><div><h2>Derniers documents</h2><p>Les plus récemment mis à jour</p></div></div><div class="grid">' + last.map(function (d) { return card(d, { crumb: true }); }).join("") + "</div></section></div>", true);
-    stopGlobe = window.HubGlobe ? window.HubGlobe.mount($("#globe")) : null;
+    stopGlobe = window.HubGlobe ? window.HubGlobe.mount($("#globe"), $("#globeF")) : null;
     var sb = bindSearch($("#sx-hero"), true);
     $$(".chip[data-p]").forEach(function (b) { b.addEventListener("click", function () { var v = b.dataset.p === profil() ? "" : b.dataset.p; store.set("hub.profil", v); home(); }); });
   }
@@ -373,6 +374,9 @@
 <div class="gcard"><h3><span class="gi">${ic("lock")}</span>Supprimer un document</h3>
 <p>Le bouton <b>Supprimer</b> n'apparaît qu'avec le <b>code administrateur</b>. Le document disparaît du site après 1 à 3 minutes ; une copie reste récupérable dans l'historique GitHub.</p></div>
 
+<div class="gcard"><h3><span class="gi">${ic("lock")}</span>Le coffre sécurisé</h3>
+<p>La bulle <b>Coffre</b> regroupe les documents sensibles (formulaires nominatifs, signatures, répertoires). Ils sont <b>chiffrés</b> : sans le code du coffre, ils sont illisibles, même en ouvrant le dépôt GitHub. Avec le code, on peut les <b>ouvrir</b> et les <b>télécharger</b>. Pour <b>modifier</b> un document : le télécharger, le corriger sur son ordinateur, puis le <b>remplacer</b> (il est chiffré à nouveau automatiquement). Dans la fenêtre « Ajouter un document », la case <b>Sécuriser</b> envoie le fichier directement dans le coffre, chiffré ; décochée, il est publié normalement. Les documents du coffre n'apparaissent pas dans la recherche.</p></div>
+
 <div class="gcard"><h3><span class="gi">${ic("folder")}</span>Un nouvel onglet, une nouvelle étape de la route</h3>
 <p>Un nouveau dossier à l'intérieur d'un onglet se crée tout seul (« Nouveau dossier… » dans la fenêtre d'ajout). En revanche, <b>un nouvel onglet</b> (une nouvelle bulle) ou un <b>nouveau relais</b> sur la route se demande à Claude, qui adapte le site.</p></div>
 
@@ -459,6 +463,7 @@
     else if ((m = h.match(/^\/p\/(.+)$/))) parcours(m[1]);
     else if ((m = h.match(/^\/recherche\/(.*)$/))) results(m[1]);
     else if (h === "/guide") guide();
+    else if (h === "/coffre") { if (window.HubCoffre) window.HubCoffre.page(); else notFound(); }
     else notFound();
     window.scrollTo(0, 0);
     if (m && h.indexOf("/recherche/") === 0 && topSearch) topSearch.set(m[1]);
@@ -477,6 +482,6 @@
       if (n) location.hash = n.getAttribute("href");
     }
   });
-  window.HubApp = { docs: docs, byId: byId, RUBS: RUBS, rubById: rubById, ic: ic, esc: esc, enc: enc, toast: toast, store: store, repoUrl: repoUrl, refreshView: function () { route(); }, generated: H.generated, TYPE: TYPE, prettySous: prettySous, slug: slug, fmtSize: fmtSize, closeViewer: function () { location.hash = lastRoute || "#/"; } };
+  window.HubApp = { mount: function (h) { mount(h, false); }, fmtDate: fmtDate, docs: docs, byId: byId, RUBS: RUBS, rubById: rubById, ic: ic, esc: esc, enc: enc, toast: toast, store: store, repoUrl: repoUrl, refreshView: function () { route(); }, generated: H.generated, TYPE: TYPE, prettySous: prettySous, slug: slug, fmtSize: fmtSize, closeViewer: function () { location.hash = lastRoute || "#/"; } };
   shell(); route();
 })();
