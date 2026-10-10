@@ -58,6 +58,22 @@ def git_date(rel):
     return None
 
 
+def office_thumb(path, out):
+    """Vignette d'un document Word / Excel / PowerPoint : conversion en PDF par LibreOffice (si installé), puis 1re page."""
+    exe = shutil.which("soffice") or shutil.which("libreoffice")
+    if not exe or not shutil.which("pdftoppm"):
+        return False
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        prof = "file://" + os.path.join(tmp, "profil")
+        r = run([exe, "--headless", "--norestore", "-env:UserInstallation=" + prof, "--convert-to", "pdf", "--outdir", tmp, path], 240)
+        pdf = os.path.join(tmp, os.path.splitext(os.path.basename(path))[0] + ".pdf")
+        if not (r and os.path.exists(pdf)):
+            return False
+        r2 = run(["pdftoppm", "-f", "1", "-l", "1", "-jpeg", "-jpegopt", "quality=75", "-scale-to-x", "440", "-scale-to-y", "-1", "-singlefile", pdf, out[:-4]], 120)
+        return bool(r2 and r2.returncode == 0 and os.path.exists(out))
+
+
 def make_thumb(path, ext, out):
     """Crée une vignette 440 px de large (si les outils sont disponibles)."""
     os.makedirs(THUMBS, exist_ok=True)
@@ -66,6 +82,8 @@ def make_thumb(path, ext, out):
         base = out[:-4]
         r = run(["pdftoppm", "-f", "1", "-l", "1", "-jpeg", "-jpegopt", "quality=75", "-scale-to-x", "440", "-scale-to-y", "-1", "-singlefile", path, base], 120)
         return bool(r and r.returncode == 0 and os.path.exists(out))
+    if t in ("word", "excel", "ppt"):
+        return office_thumb(path, out)
     if t == "video" and shutil.which("ffmpeg"):
         for ss in ("3", "0"):
             r = run(["ffmpeg", "-y", "-loglevel", "error", "-ss", ss, "-i", path, "-vframes", "1", "-vf", "scale=440:-2", "-q:v", "4", out], 120)
@@ -158,7 +176,7 @@ def main():
             new_etat[rel] = {"h": digest, "date": fdate}
             stem = os.path.splitext(f)[0]
             thumb = ""
-            if TYPES.get(ext) in ("pdf", "video", "image"):
+            if TYPES.get(ext) in ("pdf", "video", "image", "word", "excel", "ppt"):
                 key = hashlib.sha1(f"{rel}|{size}".encode()).hexdigest()[:12]
                 tp = os.path.join(THUMBS, key + ".jpg")
                 if os.path.exists(tp) or make_thumb(full, ext, tp):

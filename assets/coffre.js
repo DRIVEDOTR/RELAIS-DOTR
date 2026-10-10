@@ -132,10 +132,13 @@
     if (file.size > MAXB) return Promise.reject(new Error("Fichier trop volumineux (25 Mo maximum)."));
     var x = extOf(file.name); if (!TYP[x]) return Promise.reject(new Error("Ce type de fichier n'est pas accepté."));
     var id = hex(6), today = new Date().toISOString().slice(0, 10);
+    var hasTh = 0;
     return ensureKey(code).then(function () { return readBuf(file); }).then(function (buf) { return encBytes(buf); }).then(function (bytes) {
       return api.putFile("coffre/" + id + ".enc", b64e(bytes), "Coffre : nouveau document chiffré (via Le Relais DOTR)");
+    }).then(function () { return thumbOfImage(file); }).then(function (tb) {
+      if (!tb) return; return encBytes(tb).then(function (tbe) { return api.putFile("coffre/" + id + "_t.enc", b64e(tbe), "Coffre : vignette chiffrée (via Le Relais DOTR)"); }).then(function () { hasTh = 1; }).catch(function () {});
     }).then(function () {
-      return updateIndex(function (items) { items.push({ id: id, t: meta.title || api.prettyTitle(file.name), f: file.name, x: x, z: file.size, r: meta.rub, s: meta.sous, sl: meta.sousLabel || "", o: 900, d: today, desc: meta.desc || "" }); return items; });
+      return updateIndex(function (items) { items.push({ id: id, t: meta.title || api.prettyTitle(file.name), f: file.name, x: x, z: file.size, r: meta.rub, s: meta.sous, sl: meta.sousLabel || "", o: 900, th: hasTh, d: today, desc: meta.desc || "" }); return items; });
     }).then(function () { refresh(); return id; });
   }
   function replaceFile(it, file) {
@@ -150,6 +153,7 @@
   function removeFile(it) {
     var api = T();
     return api.getFile("coffre/" + it.id + ".enc").then(function (ex) { return ex ? api.delFile("coffre/" + it.id + ".enc", ex.sha, "Coffre : document supprimé (via Le Relais DOTR)") : null; })
+      .then(function () { return api.getFile("coffre/" + it.id + "_t.enc").then(function (t) { return t ? api.delFile("coffre/" + it.id + "_t.enc", t.sha, "Coffre : vignette supprimée (via Le Relais DOTR)") : null; }).catch(function () {}); })
       .then(function () { return updateIndex(function (items) { return items.filter(function (i) { return i.id !== it.id; }); }); }).then(refresh);
   }
 
@@ -209,12 +213,38 @@
     }
     wire();
   }
+  /* vignettes chiffrées : déchiffrées à la demande puis posées à la place des pastilles de type */
+  var THC = {};
+  function applyThumb(el, url) {
+    var im = new Image(); im.alt = ""; im.decoding = "async"; im.src = url;
+    im.onload = function () { im.classList.add(im.naturalWidth / im.naturalHeight > 1.15 ? "ls" : "pt"); if (el.parentNode) el.replaceWith(im); };
+  }
+  function hydrate() {
+    if (!isOpen()) return;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-vth]"), function (el) {
+      var id = el.getAttribute("data-vth"); if (!id || el.__vth) return; el.__vth = 1;
+      if (!THC[id]) THC[id] = fetchEnc(id + "_t").then(function (b) { return decBytes(new Uint8Array(b)); }).then(function (pt) { return URL.createObjectURL(new Blob([pt], { type: "image/jpeg" })); }).catch(function () { return null; });
+      THC[id].then(function (u) { if (u) applyThumb(el, u); });
+    });
+  }
+  var hTm = 0;
+  try { new MutationObserver(function () { clearTimeout(hTm); hTm = setTimeout(hydrate, 60); }).observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+  function thumbOfImage(file) {
+    return new Promise(function (ok) {
+      if (!/^image\//.test(file.type) || !window.createImageBitmap) return ok(null);
+      createImageBitmap(file).then(function (bm) {
+        var k = Math.min(1, 440 / Math.max(bm.width, bm.height)), cv = document.createElement("canvas"); cv.width = Math.max(1, Math.round(bm.width * k)); cv.height = Math.max(1, Math.round(bm.height * k));
+        var cx = cv.getContext("2d"); cx.fillStyle = "#E2E8F6"; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(bm, 0, 0, cv.width, cv.height);
+        cv.toBlob(function (bl) { bl ? bl.arrayBuffer().then(ok, function () { ok(null); }) : ok(null); }, "image/jpeg", 0.8);
+      }).catch(function () { ok(null); });
+    });
+  }
   function itemOf(d) { var id = d.vid; return (ITEMS || []).filter(function (i) { return i.id === id; })[0]; }
   function openDoc(d) { var it = itemOf(d); if (it) openView(it); }
   function autoUnlock() { var sv = ss("hub.cof"); if (sv && !isOpen()) unlock(sv).then(refresh).catch(function () { ss("hub.cof", null); }); }
 
   window.HubCoffre = {
-    isOpen: isOpen, unlock: unlock, addFile: addFile, refresh: refresh, lockDialog: lockDialog, openDoc: openDoc, autoUnlock: autoUnlock, closeView: closeView,
+    isOpen: isOpen, unlock: unlock, addFile: addFile, refresh: refresh, lockDialog: lockDialog, openDoc: openDoc, autoUnlock: autoUnlock, hydrate: hydrate, closeView: closeView,
     hasKeyOrSaved: function () { return isOpen() || !!ss("hub.cof"); }
   };
 })();

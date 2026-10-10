@@ -8,8 +8,8 @@
     if (loaded[name]) return loaded[name];
     return loaded[name] = new Promise(function (ok, ko) { var s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = function () { delete loaded[name]; ko(new Error("Bibliothèque d'aperçu indisponible")); }; document.head.appendChild(s); });
   }
-  var XL = { xlsx: 1, xls: 1, xlsm: 1, csv: 1 }, WD = { docx: 1 };
-  function can(ext) { ext = String(ext || "").toLowerCase(); return !!(XL[ext] || WD[ext]); }
+  var XL = { xlsx: 1, xls: 1, xlsm: 1, csv: 1 }, WD = { docx: 1 }, PP = { pptx: 1 };
+  function can(ext) { ext = String(ext || "").toLowerCase(); return !!(XL[ext] || WD[ext] || PP[ext]); }
   function buf(src) {
     if (src.buffer) return Promise.resolve(src.buffer);
     return fetch(src.url).then(function (r) { if (!r.ok) throw new Error("Fichier introuvable"); return r.arrayBuffer(); });
@@ -54,10 +54,18 @@
       box.innerHTML = '<div class="pv-doc"><div class="pv-page">' + (div.innerHTML || '<p class="pv-empty">Document vide.</p>') + '</div><p class="pv-cut">Aperçu simplifié (mise en page, en-têtes et pieds de page non reproduits). Téléchargez le fichier pour le voir à l\'identique.</p></div>';
     });
   }
+  function renderPpt(box, src) {
+    return Promise.all([lib("pptx", "assets/vendor/pptx-preview.min.js"), buf(src)]).then(function (r) {
+      box.innerHTML = '<div class="pv-ppt"><div class="pv-slides"></div><p class="pv-cut">Aperçu simplifié (polices, animations et certains effets non reproduits). Téléchargez le fichier pour le voir à l\'identique.</p></div>';
+      var w = Math.max(280, Math.min(960, (box.clientWidth || 800) - 28)), host = box.querySelector(".pv-slides");
+      var pv = window.pptxPreview.init(host, { width: w, height: Math.max(320, (box.clientHeight || 600) - 70) });
+      return pv.preview(r[1]);
+    });
+  }
   function render(box, src, ext) {
     ext = String(ext || "").toLowerCase();
     box.innerHTML = '<div class="v-na"><b>Chargement de l\'aperçu…</b></div>';
-    var p = XL[ext] ? renderExcel(box, src) : WD[ext] ? renderWord(box, src) : Promise.reject(new Error("Format non pris en charge"));
+    var p = XL[ext] ? renderExcel(box, src) : WD[ext] ? renderWord(box, src) : PP[ext] ? renderPpt(box, src) : Promise.reject(new Error("Format non pris en charge"));
     return p.catch(function (e) { box.innerHTML = '<div class="v-na"><b>Aperçu impossible pour ce fichier</b><p>' + esc(e && e.message || e) + ". Utilisez « Télécharger » pour l'ouvrir dans son application.</p></div>"; });
   }
   window.HubPreview = { can: can, render: render };

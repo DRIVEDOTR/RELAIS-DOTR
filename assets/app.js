@@ -84,7 +84,7 @@
     for (var i = docs.length - 1; i >= 0; i--) if (docs[i].vault) { delete byId[docs[i].id]; docs.splice(i, 1); }
     (items || []).forEach(function (it) {
       var r = rubById[it.r]; if (!r) return;
-      var d = { id: "v:" + it.id, vid: it.id, vault: true, path: "coffre/" + it.id + ".enc", title: it.t, desc: it.desc || "", when: "", tags: [], profils: [], rub: it.r, sous: it.s || "", type: VT[it.x] || "autre", ext: it.x, size: it.z || 0, order: it.o || 900, date: it.d || "", thumb: "" };
+      var d = { id: "v:" + it.id, vid: it.id, vault: true, path: "coffre/" + it.id + ".enc", title: it.t, desc: it.desc || "", when: "", tags: [], profils: [], rub: it.r, sous: it.s || "", type: VT[it.x] || "autre", ext: it.x, size: it.z || 0, order: it.o || 900, date: it.d || "", thumb: "", vth: it.th ? 1 : 0 };
       d.rubLabel = r.label; d.sousLabel = (r.sous || {})[d.sous] || it.sl || prettySous(d.sous);
       d.hay = norm([d.title, d.desc, d.rubLabel, d.sousLabel, it.f || ""].join(" "));
       docs.push(d); byId[d.id] = d;
@@ -114,7 +114,7 @@
   function media(d, big) {
     if (d.thumb) return '<img loading="lazy" decoding="async" src="' + esc(d.thumb) + '" alt="" onload="this.classList.add(this.naturalWidth/this.naturalHeight>1.15?\'ls\':\'pt\')">';
     var t = TYPE[d.type] || TYPE.autre;
-    return '<div class="tile t-' + d.type + '">' + ic(t.icon) + "<b>" + esc(d.ext ? d.ext.toUpperCase() : t.label.toUpperCase()) + "</b></div>";
+    return '<div class="tile t-' + d.type + '"' + (d.vth ? ' data-vth="' + esc(d.vid) + '"' : "") + '>' + ic(t.icon) + "<b>" + esc(d.ext ? d.ext.toUpperCase() : t.label.toUpperCase()) + "</b></div>";
   }
   function card(d, o) {
     o = o || {}; var t = TYPE[d.type] || TYPE.autre;
