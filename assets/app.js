@@ -73,6 +73,19 @@
     d.hay = norm([d.title, (d.tags || []).join(" "), d.desc, d.when, d.rubLabel, d.sousLabel, (d.path || "").split("/").pop()].join(" "));
     byId[d.id] = d;
   });
+  var VT = { pdf: "pdf", doc: "word", docx: "word", xls: "excel", xlsx: "excel", xlsm: "excel", csv: "excel", ppt: "ppt", pptx: "ppt", png: "image", jpg: "image", jpeg: "image", mp4: "video" };
+  function setVault(items) {
+    for (var i = docs.length - 1; i >= 0; i--) if (docs[i].vault) { delete byId[docs[i].id]; docs.splice(i, 1); }
+    (items || []).forEach(function (it) {
+      var r = rubById[it.r]; if (!r) return;
+      var d = { id: "v:" + it.id, vid: it.id, vault: true, path: "coffre/" + it.id + ".enc", title: it.t, desc: it.desc || "", when: "", tags: [], profils: [], rub: it.r, sous: it.s || "", type: VT[it.x] || "autre", ext: it.x, size: it.z || 0, order: it.o || 900, date: it.d || "", thumb: "" };
+      d.rubLabel = r.label; d.sousLabel = (r.sous || {})[d.sous] || it.sl || prettySous(d.sous);
+      d.hay = norm([d.title, d.desc, d.rubLabel, d.sousLabel, it.f || ""].join(" "));
+      docs.push(d); byId[d.id] = d;
+    });
+    var b = document.querySelector(".vault-btn"); $$(".vault-btn").forEach(function (x) { x.classList.toggle("on", !!(window.HubCoffre && window.HubCoffre.isOpen())); x.title = window.HubCoffre && window.HubCoffre.isOpen() ? "Documents sécurisés déverrouillés (cliquer pour verrouiller)" : "Déverrouiller les documents sécurisés"; });
+    if (!/^#\/d\//.test(location.hash)) route();
+  }
   function prettySous(s) { s = String(s || "").split("/").pop().replace(/^\d+[-_ ]+/, "").replace(/[-_]+/g, " "); return s.charAt(0).toUpperCase() + s.slice(1); }
   var cmp = function (a, b) { return (a.order - b.order) || a.title.localeCompare(b.title, "fr", { numeric: true, sensitivity: "base" }); };
   var inRub = function (id) { var pd = window.HubTeam ? window.HubTeam.state().del : {}; return docs.filter(function (d) { return d.rub === id && !pd[d.path]; }).sort(cmp); };
@@ -102,7 +115,7 @@
     if (d.pending) return '<div class="card pending" title="' + esc(d.title) + '"><div class="thumb">' + media(d) + '<span class="pnd">En cours de publication</span></div><div class="cbody"><h4>' + esc(d.title) + '</h4><p class="cmeta"><span class="badge b-' + d.type + '">' + t.label + '</span><span>Visible d\'ici 1 à 3 minutes</span></p></div></div>';
     return '<a class="card" href="#/d/' + enc(d.id) + '" title="' + esc(d.title) + '"><div class="thumb">' + media(d) +
       (d.type === "video" ? '<span class="play">' + ic("play") + "</span>" + (d.duree ? '<em class="dur">' + fmtDur(d.duree) + "</em>" : "") : "") +
-      (isNew(d) ? '<span class="new">Nouveau</span>' : "") + (d.essentiel && !o.noStar ? '<span class="star" title="Essentiel">' + ic("star") + "</span>" : "") +
+      (d.vault ? '<span class="vlk" title="Document sécurisé">' + ic("lock") + "</span>" : "") + (isNew(d) ? '<span class="new">Nouveau</span>' : "") + (d.essentiel && !o.noStar ? '<span class="star" title="Essentiel">' + ic("star") + "</span>" : "") +
       '</div><div class="cbody"><h4>' + (o.hl ? hl(d.title, o.hl) : esc(d.title)) + '</h4><p class="cmeta"><span class="badge b-' + d.type + '">' + t.label + "</span><span>" + esc(meta(d)) + "</span></p>" +
       (o.crumb ? '<p class="crumb">' + esc(d.rubLabel) + (d.sousLabel ? " › " + esc(d.sousLabel) : "") + "</p>" : "") + "</div></a>";
   }
@@ -172,7 +185,7 @@
     return { input: input, set: function (v) { input.value = v; } };
   }
   function searchBox(id, ph, kbd) {
-    return '<div class="sx" id="' + id + '"><label class="sx-box">' + ic("search") + '<span class="sr">Rechercher</span><input type="search" autocomplete="off" placeholder="' + esc(ph) + '">' + (kbd ? "<kbd>/</kbd>" : "") + '</label><div class="sx-pop" hidden></div></div>';
+    return '<div class="sx" id="' + id + '"><label class="sx-box">' + ic("search") + '<span class="sr">Rechercher</span><input type="search" autocomplete="off" placeholder="' + esc(ph) + '">' + (kbd ? "<kbd>/</kbd>" : "") + '</label><button type="button" class="vault-btn" aria-label="Documents sécurisés" title="Déverrouiller les documents sécurisés">' + ic("lock") + '</button><div class="sx-pop" hidden></div></div>';
   }
 
   /* ---------- structure fixe ---------- */
@@ -198,11 +211,24 @@
     var m = location.hostname.match(/^([^.]+)\.github\.io$/); if (!m) return "";
     var seg = location.pathname.split("/").filter(Boolean)[0]; return "https://github.com/" + m[1] + (seg ? "/" + seg : "");
   }
+  var fx = null;
+  function fxInit() {
+    fx = $("#bgfx"); if (!fx) return;
+    var rise = ""; for (var i = 0; i < 16; i++) { var sz = 14 + Math.round(Math.random() * 70); rise += '<i style="left:' + Math.round(Math.random() * 100) + "%;width:" + sz + "px;height:" + sz + "px;animation-duration:" + (14 + Math.round(Math.random() * 22)) + "s;animation-delay:-" + Math.round(Math.random() * 30) + "s;--sx:" + (Math.round(Math.random() * 80) - 40) + 'px"></i>'; }
+    fx.innerHTML = '<div class="hero-bubbles">' + rise + '</div><div class="hero-art"><canvas id="globe"></canvas>' + (window.HubCompass ? window.HubCompass.art() : "") + '<canvas id="globeF"></canvas></div>';
+    if (window.HubGlobe) window.HubGlobe.mount($("#globe"), $("#globeF"));
+    fxOpacity();
+  }
+  function fxOpacity() {
+    if (!fx) return; var h = document.body.classList.contains("home"), y = window.scrollY || 0, lo = h ? 0.26 : 0.19;
+    var o = h ? 1 - (1 - lo) * Math.min(1, y / 520) : lo; fx.style.opacity = o.toFixed(3);
+  }
   function setMode(home) {
     document.body.classList.toggle("home", home);
+    setTimeout(fxOpacity, 0);
     document.body.classList.toggle("solid", !home || window.scrollY > 24);
   }
-  window.addEventListener("scroll", function () { if (document.body.classList.contains("home")) document.body.classList.toggle("solid", window.scrollY > 24); }, { passive: true });
+  window.addEventListener("scroll", function () { if (document.body.classList.contains("home")) document.body.classList.toggle("solid", window.scrollY > 24); fxOpacity(); }, { passive: true });
 
   /* ---------- pages ---------- */
   var app = $("#app"), stopGlobe = null, lastRoute = null;
@@ -267,7 +293,7 @@
       var n = docs.filter(function (d) { return d.rub === r.id; }).length; if (!n) return "";
       var dim = pf && (r.profils || []).length && r.profils.indexOf(pf) < 0;
       return '<a class="bw' + (dim ? " dim" : "") + '" href="#/r/' + enc(r.id) + '"><div class="bubble bc-' + (r.color || "blue") + '">' + ic(r.icon || "folder") + "<b>" + esc(r.label) + "</b><small class=\"bd\">" + esc(r.desc || "") + "</small><em>" + n + '</em></div><span class="sr">' + esc(r.desc || "") + "</span></a>";
-    }).join("") + '<a class="bw" href="#/coffre"><div class="bubble bc-vault">' + ic("lock") + '<b>Coffre</b><small class="bd">Documents sensibles chiffrés : formulaires nominatifs, signatures, répertoires. Code d\'accès requis.</small><em>Code requis</em></div><span class="sr">Documents sensibles, accessibles avec un code.</span></a>';
+    }).join("");
     var pc = PARCOURS.map(function (p) {
       var n = parcoursDocs(p).length; if (!n) return "";
       return '<a class="pcard" href="#/p/' + enc(p.id) + '"><span class="pi">' + ic(p.icon || "arrow") + "</span><span><b>" + esc(p.label) + "</b><span>" + esc(p.desc || "") + "</span></span></a>";
@@ -275,9 +301,8 @@
     var ess = docs.filter(function (d) { return d.essentiel; }); if (pf) { var f = ess.filter(function (d) { return (d.profils || []).indexOf(pf) >= 0; }); if (f.length >= 3) ess = f; }
     var last = docs.filter(function (d) { return d.date; }).sort(function (a, b) { return b.date.localeCompare(a.date) || cmp(a, b); }).slice(0, 8);
     var chips = PROFILS.map(function (p) { return '<button class="chip" type="button" data-p="' + esc(p.id) + '" aria-pressed="' + (pf === p.id) + '">' + esc(p.label) + "</button>"; }).join("");
-    var rise = ""; for (var i = 0; i < 14; i++) { var s = 14 + Math.round(Math.random() * 70); rise += '<i style="left:' + Math.round(Math.random() * 100) + "%;width:" + s + "px;height:" + s + "px;animation-duration:" + (14 + Math.round(Math.random() * 22)) + "s;animation-delay:-" + Math.round(Math.random() * 30) + "s;--sx:" + (Math.round(Math.random() * 80) - 40) + 'px"></i>'; }
     var nm = esc(SITE.name || "Hub").replace(/(\S+)$/, "<span>$1</span>");
-    mount('<header class="hero"><div class="hero-bubbles" aria-hidden="true">' + rise + '</div><div class="hero-art" aria-hidden="true"><canvas id="globe"></canvas>' + (window.HubCompass ? window.HubCompass.art() : "") + '<canvas id="globeF"></canvas></div><div class="wrap">' +
+    mount('<header class="hero"><div class="wrap">' +
       '<h1>' + nm + '</h1><p class="slogan"><b>' + esc(SITE.slogan || "") + "</b><br>" + esc(SITE.baseline || "") + "</p>" +
       searchBox("sx-hero", window.innerWidth < 600 ? "Rechercher un document…" : "Que cherchez-vous ? convention, logo, CRM, tuto Healphi…", true) +
       '<div class="persona"><span>Je suis…</span>' + chips + "</div></div></header>" +
@@ -286,7 +311,6 @@
       '<section class="s"><div class="s-h"><div><h2>Je veux…</h2><p>Des parcours tout prêts pour une situation précise</p></div></div><div class="pgrid">' + pc + "</div></section>" +
       (ess.length ? '<section class="s"><div class="s-h"><div><h2>' + (pf ? "Les essentiels pour vous" : "Les essentiels") + "</h2><p>À connaître en priorité</p></div></div><div class=\"grid\">" + ess.slice(0, 8).map(function (d) { return card(d, { crumb: true, noStar: true }); }).join("") + "</div></section>" : "") +
       '<section class="s"><div class="s-h"><div><h2>Derniers documents</h2><p>Les plus récemment mis à jour</p></div></div><div class="grid">' + last.map(function (d) { return card(d, { crumb: true }); }).join("") + "</div></section></div>", true);
-    stopGlobe = window.HubGlobe ? window.HubGlobe.mount($("#globe"), $("#globeF")) : null;
     var sb = bindSearch($("#sx-hero"), true);
     $$(".chip[data-p]").forEach(function (b) { b.addEventListener("click", function () { var v = b.dataset.p === profil() ? "" : b.dataset.p; store.set("hub.profil", v); home(); }); });
   }
@@ -375,7 +399,7 @@
 <p>Le bouton <b>Supprimer</b> n'apparaît qu'avec le <b>code administrateur</b>. Le document disparaît du site après 1 à 3 minutes ; une copie reste récupérable dans l'historique GitHub.</p></div>
 
 <div class="gcard"><h3><span class="gi">${ic("lock")}</span>Le coffre sécurisé</h3>
-<p>La bulle <b>Coffre</b> regroupe les documents sensibles (formulaires nominatifs, signatures, répertoires). Ils sont <b>chiffrés</b> : sans le code du coffre, ils sont illisibles, même en ouvrant le dépôt GitHub. Avec le code, on peut les <b>ouvrir</b> et les <b>télécharger</b>. Pour <b>modifier</b> un document : le télécharger, le corriger sur son ordinateur, puis le <b>remplacer</b> (il est chiffré à nouveau automatiquement). Dans la fenêtre « Ajouter un document », la case <b>Sécuriser</b> envoie le fichier directement dans le coffre, chiffré ; décochée, il est publié normalement. Les documents du coffre n'apparaissent pas dans la recherche.</p></div>
+<p>Les documents sensibles (formulaires nominatifs, signatures, répertoires…) sont <b>chiffrés</b> : sans le code, ils sont illisibles, même en ouvrant le dépôt GitHub, et ils restent invisibles sur le site. Cliquez sur le <b>cadenas</b> à droite de la barre de recherche, saisissez le code : tous les documents sécurisés apparaissent dans <b>leur onglet habituel</b>, repérés par un petit cadenas. On peut alors les ouvrir, les télécharger et les chercher. Pour <b>modifier</b> un document : le télécharger, le corriger sur son ordinateur, puis le <b>remplacer</b> (il est chiffré à nouveau automatiquement). Dans « Ajouter un document », la case <b>Sécuriser</b> chiffre le fichier tout en le rangeant dans le dossier choisi ; décochée, il est publié normalement. Le cadenas se referme avec « Verrouiller ».</p></div>
 
 <div class="gcard"><h3><span class="gi">${ic("folder")}</span>Un nouvel onglet, une nouvelle étape de la route</h3>
 <p>Un nouveau dossier à l'intérieur d'un onglet se crée tout seul (« Nouveau dossier… » dans la fenêtre d'ajout). En revanche, <b>un nouvel onglet</b> (une nouvelle bulle) ou un <b>nouveau relais</b> sur la route se demande à Claude, qui adapte le site.</p></div>
@@ -401,6 +425,7 @@
   /* ---------- visionneuse ---------- */
   var viewer = $("#viewer"), viewerOpen = false, lastFocus = null;
   function openViewer(d) {
+    if (d.vault) { if (viewerOpen) closeViewer(); if (window.HubCoffre) window.HubCoffre.openDoc(d); return; }
     var t = TYPE[d.type] || TYPE.autre, r = rubById[d.rub] || {};
     var coarse = window.matchMedia && (matchMedia("(pointer:coarse)").matches || window.innerWidth < 860);
     var u = fileUrl(d), pv;
@@ -436,7 +461,8 @@
     if (window.HubTeam) window.HubTeam.decorate();
   }
   var suppress = false;
-  function closeViewer() { if (!viewerOpen) return; viewer.hidden = true; viewer.innerHTML = ""; viewerOpen = false; document.documentElement.style.overflow = ""; if (lastFocus && lastFocus.focus) try { lastFocus.focus(); } catch (e) {} }
+  function closeViewer() { if (window.HubCoffre) window.HubCoffre.closeView(); if (!viewerOpen) return; viewer.hidden = true; viewer.innerHTML = ""; viewerOpen = false; document.documentElement.style.overflow = ""; if (lastFocus && lastFocus.focus) try { lastFocus.focus(); } catch (e) {} }
+  function back() { location.hash = lastRoute || "#/"; }
   function closeViaNav() { location.hash = lastRoute || "#/"; }
   function copy(txt) {
     function done() { toast("Lien copié"); }
@@ -463,7 +489,6 @@
     else if ((m = h.match(/^\/p\/(.+)$/))) parcours(m[1]);
     else if ((m = h.match(/^\/recherche\/(.*)$/))) results(m[1]);
     else if (h === "/guide") guide();
-    else if (h === "/coffre") { if (window.HubCoffre) window.HubCoffre.page(); else notFound(); }
     else notFound();
     window.scrollTo(0, 0);
     if (m && h.indexOf("/recherche/") === 0 && topSearch) topSearch.set(m[1]);
@@ -482,6 +507,7 @@
       if (n) location.hash = n.getAttribute("href");
     }
   });
-  window.HubApp = { mount: function (h) { mount(h, false); }, fmtDate: fmtDate, docs: docs, byId: byId, RUBS: RUBS, rubById: rubById, ic: ic, esc: esc, enc: enc, toast: toast, store: store, repoUrl: repoUrl, refreshView: function () { route(); }, generated: H.generated, TYPE: TYPE, prettySous: prettySous, slug: slug, fmtSize: fmtSize, closeViewer: function () { location.hash = lastRoute || "#/"; } };
-  shell(); route();
+  window.HubApp = { setVault: setVault, back: back, mount: function (h) { mount(h, false); }, fmtDate: fmtDate, docs: docs, byId: byId, RUBS: RUBS, rubById: rubById, ic: ic, esc: esc, enc: enc, toast: toast, store: store, repoUrl: repoUrl, refreshView: function () { route(); }, generated: H.generated, TYPE: TYPE, prettySous: prettySous, slug: slug, fmtSize: fmtSize, closeViewer: function () { location.hash = lastRoute || "#/"; } };
+  document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest(".vault-btn"); if (b && window.HubCoffre) { e.preventDefault(); window.HubCoffre.lockDialog(); } });
+  shell(); fxInit(); route(); if (window.HubCoffre) window.HubCoffre.autoUnlock();
 })();

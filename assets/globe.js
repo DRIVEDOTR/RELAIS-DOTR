@@ -69,13 +69,6 @@ window.HubGlobe = {
           /* dégradé de base qui glisse lentement sur les continents */
           var g1 = cl(0.5 + 0.45 * Math.sin(ph + (x * 0.85 - y * 0.55) * 2.6) + 0.12 * (lr - 0.5)), sh = 1 - 0.18 * limb;
           var cr = (16 + (64 - 16) * g1) * sh + 30 * rim, cg = (34 + (128 - 34) * g1) * sh + 42 * rim, cb = 190 + (255 - 190) * g1;
-          /* « virgules » : reflets clairs le long des côtes tournées vers la lumière, ombres côté opposé ; la lumière tourne lentement */
-          var n1 = k + dN, n2 = k - dN * 1.5, n3 = k + 3 * dN, hi = 0, lo = 0, wide = 0;
-          if (n1 >= 0 && n1 < n && pre.in[n1] === 1) hi = cl((L - sm(samp(pre.lon[n1] + a, pre.v[n1], mb) / 255)) * 1.9); hi = hi * hi * (3 - 2 * hi);
-          if (n3 >= 0 && n3 < n && pre.in[n3] === 1) wide = cl((samp(u, v, md) - samp(pre.lon[n3] + a, pre.v[n3], md)) / 255 * 2.6);
-          if (n2 >= 0 && n2 < n && pre.in[n2] === 1) lo = cl((L - sm(samp(pre.lon[n2] + a, pre.v[n2], mb) / 255)) * 1.8);
-          var hh = Math.min(0.85, hi * 0.3 + wide * 0.6); cr += (150 - cr) * hh + (hi > 0.7 ? (235 - cr) * (hi - 0.7) : 0); cg += (205 - cg) * hh + (hi > 0.7 ? (245 - cg) * (hi - 0.7) : 0); cb += (255 - cb) * hh;
-          cr *= 1 - 0.28 * lo; cg *= 1 - 0.25 * lo; cb *= 1 - 0.1 * lo;
           rr = or + (Math.min(255, cr) - or) * L; gg = og + (Math.min(255, cg) - og) * L; bb = ob + (Math.min(255, cb) - ob) * L;
         }
         d[o] = rr; d[o + 1] = gg; d[o + 2] = bb; d[o + 3] = 255 * pre.a[k];
@@ -94,7 +87,7 @@ window.HubGlobe = {
     }
     function ringTh(r, t, s) { return (r.ph + r.pa * Math.sin(t * r.ps * 2 + s)) * Math.PI; }
     function ringCol(u, m) {
-      var S = [[0, 140, 232, 255], [0.08, 64, 160, 255], [0.26, 28, 64, 224], [m, 70, 130, 255], [0.70, 20, 40, 184], [0.88, 30, 74, 230], [0.955, 70, 170, 255], [1, 150, 236, 255]];
+      var S = [[0, 120, 225, 255], [0.07, 60, 170, 255], [0.2, 12, 40, 190], [0.36, 40, 120, 255], [m, 150, 215, 255], [m + 0.08, 36, 110, 245], [0.76, 8, 24, 160], [0.84, 20, 70, 225], [0.93, 90, 190, 255], [1, 190, 245, 255]];
       for (var k = 1; k < S.length; k++) if (u <= S[k][0]) { var a = S[k - 1], b = S[k], f = (u - a[0]) / Math.max(1e-6, b[0] - a[0]); return [Math.round(a[1] + (b[1] - a[1]) * f), Math.round(a[2] + (b[2] - a[2]) * f), Math.round(a[3] + (b[3] - a[3]) * f)]; }
       return [150, 236, 255];
     }
@@ -115,8 +108,8 @@ window.HubGlobe = {
           c.moveTo(outer[q].x, outer[q].y); c.lineTo(outer[q + 1].x, outer[q + 1].y); c.lineTo(inner[q + 1].x, inner[q + 1].y); c.lineTo(inner[q].x, inner[q].y); c.closePath(); c.fill(); c.stroke();
           /* reflets en « virgules » qui courent le long de l'anneau */
           var env = uu < 0.1 || uu > 0.9 ? 0 : Math.pow(Math.sin(Math.PI * (uu - 0.1) / 0.8), 0.8), w1 = Math.pow(Math.max(0, Math.sin(uu * 11 - t * 0.0021 + s * 2.1)), 2) * env, w2 = Math.pow(Math.max(0, Math.sin(uu * 7.5 + t * 0.0016 + s * 1.3)), 2) * env;
-          if (w1 > 0.02) { c.fillStyle = "rgba(205,240,255," + (0.78 * w1).toFixed(3) + ")"; c.beginPath(); c.moveTo(i1[q].x, i1[q].y); c.lineTo(i1[q + 1].x, i1[q + 1].y); c.lineTo(i2[q + 1].x, i2[q + 1].y); c.lineTo(i2[q].x, i2[q].y); c.closePath(); c.fill(); }
-          if (w2 > 0.02) { c.fillStyle = "rgba(120,190,255," + (0.6 * w2).toFixed(3) + ")"; c.beginPath(); c.moveTo(o1[q].x, o1[q].y); c.lineTo(o1[q + 1].x, o1[q + 1].y); c.lineTo(o2[q + 1].x, o2[q + 1].y); c.lineTo(o2[q].x, o2[q].y); c.closePath(); c.fill(); }
+          if (w1 > 0.02) { c.fillStyle = "rgba(225,248,255," + (0.95 * w1).toFixed(3) + ")"; c.beginPath(); c.moveTo(i1[q].x, i1[q].y); c.lineTo(i1[q + 1].x, i1[q + 1].y); c.lineTo(i2[q + 1].x, i2[q + 1].y); c.lineTo(i2[q].x, i2[q].y); c.closePath(); c.fill(); }
+          if (w2 > 0.02) { c.fillStyle = "rgba(90,170,255," + (0.8 * w2).toFixed(3) + ")"; c.beginPath(); c.moveTo(o1[q].x, o1[q].y); c.lineTo(o1[q + 1].x, o1[q + 1].y); c.lineTo(o2[q + 1].x, o2[q + 1].y); c.lineTo(o2[q].x, o2[q].y); c.closePath(); c.fill(); }
         }
       }
     }

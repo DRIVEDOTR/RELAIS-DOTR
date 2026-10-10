@@ -75,6 +75,8 @@
   function save(blob, name) { var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000); }
   var ov = null, ovUrl = null;
   function closeView() { if (ov) { ov.remove(); ov = null; } if (ovUrl) { URL.revokeObjectURL(ovUrl); ovUrl = null; } document.documentElement.style.overflow = ""; }
+  function teamBtns() { var api = T(), app = A(); if (!api || !api.token || !api.token()) return ""; return '<button class="btn sm" data-cv="rep" type="button">' + app.ic("refresh") + 'Remplacer</button>' + (api.role() === "admin" ? '<button class="btn sm" data-cv="del" type="button">' + app.ic("trash") + 'Supprimer</button>' : ""); }
+  function back() { var app = A(); if (app && app.back) app.back(); }
   function openView(it) {
     closeView(); var app = A();
     ov = document.createElement("div"); ov.id = "cview";
@@ -83,7 +85,9 @@
     var blob = null, body = ov.querySelector(".cv-body");
     ov.addEventListener("click", function (e) {
       var b = e.target.closest("[data-cv]"); if (!b) return;
-      if (b.dataset.cv === "x") closeView();
+      if (b.dataset.cv === "x") { closeView(); back(); }
+      if (b.dataset.cv === "rep") T().need("contrib", function () { replaceDialog(it, function () { closeView(); back(); }); });
+      if (b.dataset.cv === "del") T().need("admin", function () { deleteDialog(it, function () { closeView(); back(); }); });
       if (b.dataset.cv === "dl") { if (blob) save(blob, it.f); }
     });
     plain(it).then(function (bl) {
@@ -94,7 +98,7 @@
       else body.innerHTML = '<div class="cv-load"><b>Aperçu indisponible pour ce type de fichier.</b><br>Cliquez sur « Télécharger » pour l\'ouvrir dans son application (' + esc(x.toUpperCase()) + ').</div>';
     }).catch(function (e) { if (body) body.innerHTML = '<div class="cv-load err">' + esc(e && e.name === "OperationError" ? "Déchiffrement impossible : le fichier est corrompu ou le code ne correspond plus." : (e.message || e)) + "</div>"; });
   }
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ov) { e.stopImmediatePropagation(); closeView(); } }, true);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ov && !document.getElementById("modal")) { e.stopImmediatePropagation(); closeView(); back(); } }, true);
 
   /* ---------- écriture (équipe) ---------- */
   function readBuf(file) { return new Promise(function (ok, ko) { var r = new FileReader(); r.onload = function () { ok(r.result); }; r.onerror = function () { ko(new Error("Lecture du fichier impossible")); }; r.readAsArrayBuffer(file); }); }
@@ -130,8 +134,8 @@
     return ensureKey(code).then(function () { return readBuf(file); }).then(function (buf) { return encBytes(buf); }).then(function (bytes) {
       return api.putFile("coffre/" + id + ".enc", b64e(bytes), "Coffre : nouveau document chiffré (via Le Relais DOTR)");
     }).then(function () {
-      return updateIndex(function (items) { items.push({ id: id, t: meta.title || api.prettyTitle(file.name), f: file.name, x: x, z: file.size, g: meta.group || "Divers", d: today, desc: meta.desc || "" }); return items; });
-    }).then(function () { return id; });
+      return updateIndex(function (items) { items.push({ id: id, t: meta.title || api.prettyTitle(file.name), f: file.name, x: x, z: file.size, r: meta.rub, s: meta.sous, sl: meta.sousLabel || "", o: 900, d: today, desc: meta.desc || "" }); return items; });
+    }).then(function () { refresh(); return id; });
   }
   function replaceFile(it, file) {
     var api = T(); if (file.size > MAXB) return Promise.reject(new Error("Fichier trop volumineux (25 Mo maximum)."));
@@ -140,12 +144,12 @@
       return api.getFile("coffre/" + it.id + ".enc").then(function (ex) { return api.putFile("coffre/" + it.id + ".enc", b64e(bytes), "Coffre : nouvelle version chiffrée (via Le Relais DOTR)", ex && ex.sha); });
     }).then(function () {
       return updateIndex(function (items) { items.forEach(function (i) { if (i.id === it.id) { i.f = file.name; i.x = x; i.z = file.size; i.d = new Date().toISOString().slice(0, 10); } }); return items; });
-    });
+    }).then(refresh);
   }
   function removeFile(it) {
     var api = T();
     return api.getFile("coffre/" + it.id + ".enc").then(function (ex) { return ex ? api.delFile("coffre/" + it.id + ".enc", ex.sha, "Coffre : document supprimé (via Le Relais DOTR)") : null; })
-      .then(function () { return updateIndex(function (items) { return items.filter(function (i) { return i.id !== it.id; }); }); });
+      .then(function () { return updateIndex(function (items) { return items.filter(function (i) { return i.id !== it.id; }); }); }).then(refresh);
   }
 
   /* ---------- boîtes de dialogue ---------- */
@@ -179,62 +183,37 @@
     });
   }
 
-  /* ---------- page « Coffre » ---------- */
-  function groups() { var g = {}; (ITEMS || []).forEach(function (i) { g[i.g || "Divers"] = 1; }); return Object.keys(g).sort(function (a, b) { return a.localeCompare(b, "fr"); }); }
-  function page() {
-    var app = A(), api = T(), q = "";
-    app.mount('<header class="phead"><div class="wrap"><div class="crumbs"><a href="#/">Accueil</a>' + app.ic("chevron") + '<span>Coffre</span></div><h1><span class="hi bc-night">' + app.ic("lock") + '</span>Coffre sécurisé</h1><p>Documents sensibles (formulaires nominatifs, signatures, répertoires…). Ils sont chiffrés : sans le code, ils sont illisibles, même depuis GitHub.</p></div></header><div class="wrap" id="cof"></div>');
-    var root = document.getElementById("cof");
-    function locked(msg) {
-      root.innerHTML = '<div class="cof-gate"><div class="cg-ic">' + app.ic("lock") + '</div><h2>Accès protégé</h2><p>Saisissez le code du coffre pour afficher et déchiffrer les documents.</p>' +
-        '<form id="cgf" autocomplete="off"><input type="password" id="cgc" placeholder="Code du coffre" autocomplete="off" spellcheck="false"><button class="btn pri" type="submit">' + app.ic("lock") + 'Déverrouiller</button></form><div id="cge">' + (msg ? '<div class="err">' + esc(msg) + "</div>" : "") + '</div></div>';
-      var f = document.getElementById("cgf"), inp = document.getElementById("cgc"), btn = f.querySelector("button");
-      setTimeout(function () { try { inp.focus(); } catch (e) {} }, 40);
-      f.addEventListener("submit", function (e) {
-        e.preventDefault(); btn.disabled = true; btn.lastChild.textContent = "Vérification…"; document.getElementById("cge").innerHTML = "";
-        unlock(inp.value).then(draw).catch(function (er) { btn.disabled = false; btn.lastChild.textContent = "Déverrouiller"; document.getElementById("cge").innerHTML = '<div class="err">' + esc(er.wrong ? "Code incorrect." : er.novault ? "Le coffre n'est pas encore en ligne. Il apparaîtra quelques minutes après sa mise en ligne." : (er.message || er)) + "</div>"; });
-      });
+  /* ---------- intégration au site : les documents chiffrés apparaissent dans leur onglet d'origine ---------- */
+  function refresh() { var app = A(); if (app && app.setVault) app.setVault(isOpen() ? ITEMS : []); }
+  function lockDialog() {
+    var app = A(), api = T(); if (!api || !api.openModal) return;
+    function body(msg) {
+      if (isOpen()) return "<h2>Coffre déverrouillé</h2><p class=\"sub\">" + ITEMS.length + " document" + (ITEMS.length > 1 ? "s" : "") + " chiffré" + (ITEMS.length > 1 ? "s sont" : " est") + " affiché" + (ITEMS.length > 1 ? "s" : "") + " dans leurs onglets (repérés par un cadenas).</p><div class=\"acts\"><button class=\"btn\" data-mclose type=\"button\">Fermer</button><button class=\"btn pri\" id=\"mlock\" type=\"button\">" + app.ic("lock") + "Verrouiller</button></div>";
+      return "<h2>Documents sécurisés</h2><p class=\"sub\">Saisissez le code pour déchiffrer les documents sensibles. Ils apparaîtront dans leurs onglets habituels.</p><form id=\"mf\" autocomplete=\"off\"><input type=\"password\" id=\"mcode\" placeholder=\"Code d'accès\" autocomplete=\"off\" spellcheck=\"false\"><div id=\"merr\">" + (msg ? "<div class=\"err\">" + esc(msg) + "</div>" : "") + "</div><div class=\"acts\"><button class=\"btn\" data-mclose type=\"button\">Annuler</button><button class=\"btn pri\" type=\"submit\" id=\"mgo\">" + app.ic("lock") + "Déverrouiller</button></div></form>";
     }
-    function draw() {
-      if (!isOpen()) return locked();
-      var team = api && api.token(), items = ITEMS.slice();
-      var qq = q ? q.toLowerCase() : "";
-      var l = items.filter(function (i) { return !qq || (i.t + " " + i.f + " " + (i.g || "") + " " + (i.desc || "")).toLowerCase().indexOf(qq) >= 0; });
-      var gs = {}; l.forEach(function (i) { (gs[i.g || "Divers"] = gs[i.g || "Divers"] || []).push(i); });
-      var keys = Object.keys(gs).sort(function (a, b) { return a.localeCompare(b, "fr"); });
-      root.innerHTML = '<div class="cof-tools"><label class="local">' + app.ic("search") + '<span class="sr">Filtrer</span><input id="cq" type="search" placeholder="Filtrer dans le coffre…" value="' + esc(q) + '"></label><span class="cv-sp"></span>' +
-        '<button class="btn sm' + (team ? " pri" : "") + '" id="cadd" type="button">' + app.ic("plus") + 'Ajouter un document</button><button class="btn sm" id="clock" type="button">' + app.ic("lock") + 'Verrouiller le coffre</button></div>' +
-        '<p class="cof-help">' + items.length + ' document' + (items.length > 1 ? "s" : "") + ' · <b>Modifier un document</b> : téléchargez-le, modifiez-le sur votre ordinateur, puis utilisez « Remplacer » pour le chiffrer à nouveau.</p>' +
-        (keys.length ? keys.map(function (k) {
-          return '<section class="grp"><h3>' + esc(k) + "<span>" + gs[k].length + '</span></h3><div class="cof-list">' + gs[k].map(function (i) {
-            var tp = TYP[i.x] || "autre", t = (app.TYPE[tp] || app.TYPE.autre);
-            return '<div class="crow" data-id="' + esc(i.id) + '"><div class="tile t-' + tp + ' sm">' + app.ic(t.icon) + '</div><div class="cr-m"><h4>' + esc(i.t) + '</h4><p><span class="badge b-' + tp + '">' + esc(i.x.toUpperCase()) + "</span> " + esc(app.fmtSize(i.z)) + (i.d ? " · " + esc(app.fmtDate(i.d)) : "") + (i.desc ? " · " + esc(i.desc) : "") + '</p></div><div class="cr-a">' +
-              '<button class="btn sm" data-a="open" type="button">' + app.ic("eye") + 'Ouvrir</button><button class="btn sm" data-a="dl" type="button">' + app.ic("download") + 'Télécharger</button>' +
-              (team ? '<button class="btn sm" data-a="rep" type="button">' + app.ic("refresh") + 'Remplacer</button>' : "") + (team && api.role() === "admin" ? '<button class="btn sm warn" data-a="del" type="button">' + app.ic("trash") + "Supprimer</button>" : "") + "</div></div>";
-          }).join("") + "</div></section>";
-        }).join("") : '<div class="empty">' + (items.length ? "Aucun document ne correspond à ce filtre." : "Le coffre est vide pour l'instant.") + "</div>");
-      document.getElementById("cq").addEventListener("input", function (e) { q = e.target.value; var pos = e.target.selectionStart; draw(); var n = document.getElementById("cq"); n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) {} });
-      document.getElementById("clock").addEventListener("click", function () { lockVault(); q = ""; locked(); });
-      document.getElementById("cadd").addEventListener("click", function () { api && api.need("contrib", function () { api.addDialog("__coffre"); }); if (!api) app.toast("Espace équipe indisponible"); });
-      root.querySelector(".cof-list") && root.addEventListener("click", rowClick);
+    var m = api.openModal(body());
+    function wire() {
+      var f = m.querySelector("#mf"), l = m.querySelector("#mlock");
+      if (l) l.addEventListener("click", function () { lockVault(); refresh(); api.closeModal(); app.toast("Coffre verrouillé"); });
+      if (f) {
+        var inp = m.querySelector("#mcode"), go = m.querySelector("#mgo"); setTimeout(function () { try { inp.focus(); } catch (e) {} }, 40);
+        f.addEventListener("submit", function (e) {
+          e.preventDefault(); go.disabled = true; go.lastChild.textContent = "Vérification…"; m.querySelector("#merr").innerHTML = "";
+          unlock(inp.value).then(function () { refresh(); api.closeModal(); app.toast("Documents déchiffrés : " + ITEMS.length); }).catch(function (er) {
+            go.disabled = false; go.lastChild.textContent = "Déverrouiller";
+            m.querySelector("#merr").innerHTML = '<div class="err">' + esc(er.wrong ? "Code incorrect." : er.novault ? "Aucun document sécurisé n'est encore en ligne." : (er.message || er)) + "</div>";
+          });
+        });
+      }
     }
-    function rowClick(e) {
-      var b = e.target.closest("[data-a]"); if (!b) return; var row = b.closest(".crow"), it = ITEMS.filter(function (i) { return i.id === row.dataset.id; })[0]; if (!it) return;
-      var a = b.dataset.a;
-      if (a === "open") return openView(it);
-      if (a === "dl") { b.disabled = true; return plain(it).then(function (bl) { save(bl, it.f); b.disabled = false; }).catch(function (er) { b.disabled = false; app.toast(er.message || "Téléchargement impossible"); }); }
-      if (a === "rep") return api.need("contrib", function () { replaceDialog(it, draw); });
-      if (a === "del") return api.need("admin", function () { deleteDialog(it, draw); });
-    }
-    window.HubCoffre.redraw = draw;
-    var saved = ss("hub.cof");
-    if (isOpen()) draw();
-    else if (saved) { root.innerHTML = '<div class="cof-gate"><p>Déverrouillage…</p></div>'; unlock(saved).then(draw).catch(function () { ss("hub.cof", null); locked(); }); }
-    else locked();
+    wire();
   }
+  function itemOf(d) { var id = d.vid; return (ITEMS || []).filter(function (i) { return i.id === id; })[0]; }
+  function openDoc(d) { var it = itemOf(d); if (it) openView(it); }
+  function autoUnlock() { var sv = ss("hub.cof"); if (sv && !isOpen()) unlock(sv).then(refresh).catch(function () { ss("hub.cof", null); }); }
 
   window.HubCoffre = {
-    page: page, isOpen: isOpen, unlock: unlock, groups: groups, addFile: addFile, redraw: function () {},
+    isOpen: isOpen, unlock: unlock, addFile: addFile, refresh: refresh, lockDialog: lockDialog, openDoc: openDoc, autoUnlock: autoUnlock, closeView: closeView,
     hasKeyOrSaved: function () { return isOpen() || !!ss("hub.cof"); }
   };
 })();
