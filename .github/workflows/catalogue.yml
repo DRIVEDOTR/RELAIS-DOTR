@@ -8,6 +8,8 @@ on:
       - "data/meta.json"
       - "data/config.json"
       - "data/liens.json"
+      - "outils/generer_catalogue.py"
+      - ".github/workflows/catalogue.yml"
   workflow_dispatch:
 permissions:
   contents: write
@@ -22,8 +24,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Outils (vignettes PDF et vidéos)
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils ffmpeg python3-pil
+      - name: Outils (vignettes PDF, vidéos, Word, Excel, PowerPoint)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends poppler-utils ffmpeg python3-pil libreoffice-writer libreoffice-calc libreoffice-impress fonts-liberation fonts-dejavu-core
       - name: Générer le catalogue
         run: python3 outils/generer_catalogue.py
       - name: Enregistrer
