@@ -38,7 +38,7 @@ window.HubGlobe = {
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       var d = Math.max(120, Math.min(260, Math.round(Math.min(W, H) * 0.2743 * 2 * dpr))); if (d !== D) build(d);
     }
-    function paint(a) {
+    function paint(a, ph) {
       var d = img.data, n = D * D, cl = function (v) { return v < 0 ? 0 : v > 1 ? 1 : v; };
       for (var k = 0; k < n; k++) {
         var o = k * 4, f = pre.in[k]; if (!f) { d[o + 3] = 0; continue; }
@@ -47,11 +47,9 @@ window.HubGlobe = {
         var deep = Math.min(1, samp(u, v, md) / 255 * 1.6);
         var e = 1 - z, ul = cl(0.5 + 0.5 * (-x * 0.75 + y * 0.65)), lr = cl(0.5 + 0.5 * (x * 0.7 - y * 0.7)), limb = Math.pow(e, 1.7);
         /* océan : blanc au centre, bleu franc et saturé vers le bord (surtout haut / gauche) comme sur le logo */
-        var tn = cl(Math.pow(e, 1.15) * (0.55 + 0.95 * ul) * 1.25), or, og, ob;
-        if (tn < 0.5) { var q1 = tn * 2; or = 255 + (118 - 255) * q1; og = 255 + (160 - 255) * q1; ob = 255 + (255 - 255) * q1; }
-        else { var q2 = (tn - 0.5) * 2; or = 118 + (28 - 118) * q2; og = 160 + (56 - 160) * q2; ob = 255 + (222 - 255) * q2; }
+        var tn = cl(Math.pow(e, 2.6) * 0.16), or = 255 + (150 - 255) * tn, og = 255 + (180 - 255) * tn, ob = 255 + (240 - 255) * tn;
         /* continents : bleu royal profond → bleu vif, lisières plus claires */
-        var g1 = cl(0.10 + 0.78 * lr + 0.2 * (1 - ul) * 0.0), sh = 1 - 0.22 * limb, rim = 1 - deep;
+        var g1 = cl(0.5 + 0.5 * Math.sin(ph + (x * 0.85 - y * 0.55) * 2.6) * 0.9 + 0.12 * (lr - 0.5)), sh = 1 - 0.18 * limb, rim = 1 - deep;
         var cr = (16 + (64 - 16) * g1) * sh, cg = (34 + (128 - 34) * g1) * sh, cb = 190 + (255 - 190) * g1;
         cr += 38 * rim * L; cg += 52 * rim * L; cb += 0;
         cr = Math.min(255, cr); cg = Math.min(255, cg); cb = Math.min(255, cb);
@@ -62,10 +60,9 @@ window.HubGlobe = {
     }
     /* anneaux du logo : croissants effilés, épais en bas à gauche, fins en haut à droite */
     var RINGS = [
-      { A: 1.54, B: 0.70, rz: -0.36, w: 0.250, ph: -0.40, span: 1.55, ps: 0.00045, pa: 0.08 },
-      { A: 1.43, B: 0.62, rz: -0.36, w: 0.175, ph: -0.29, span: 1.43, ps: 0.00052, pa: 0.09 },
-      { A: 1.34, B: 0.55, rz: -0.36, w: 0.125, ph: -0.18, span: 1.30, ps: 0.00060, pa: 0.10 },
-      { A: 1.26, B: 0.50, rz: -0.36, w: 0.085, ph: -0.07, span: 1.15, ps: 0.00068, pa: 0.11 }
+      { A: 1.54, B: 0.68, rz: -0.30, w: 0.300, ph: -0.40, span: 1.55, ps: 0.00045, pa: 0.08 },
+      { A: 1.42, B: 0.58, rz: -0.37, w: 0.205, ph: -0.27, span: 1.42, ps: 0.00052, pa: 0.09 },
+      { A: 1.32, B: 0.50, rz: -0.45, w: 0.135, ph: -0.14, span: 1.28, ps: 0.00060, pa: 0.10 }
     ];
     function ringPt(r, th, off, R, cx, cy) {
       var ox = Math.cos(th) * (r.A + off) * R, oy = Math.sin(th) * (r.B + off * 0.45) * R, cr = Math.cos(r.rz), sr = Math.sin(r.rz);
@@ -106,7 +103,7 @@ window.HubGlobe = {
       g.addColorStop(0, "rgba(51,213,251,.22)"); g.addColorStop(1, "rgba(51,213,251,0)");
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.3, 0, 7); ctx.fill();
       drawRings(false, t, R, cx, cy);
-      paint(a);
+      paint(a, t * 0.0011);
       ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
       ctx.drawImage(off, cx - R - R * D / (D - 2) * 0 - (R * D / (D - 2) - R), cy - R - (R * D / (D - 2) - R), R * 2 * D / (D - 2), R * 2 * D / (D - 2));
       drawRings(true, t, R, cx, cy);
