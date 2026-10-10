@@ -1,0 +1,16 @@
+{
+ "v": 1,
+ "repo": "DRIVEDOTR/RELAIS-DOTR",
+ "branch": "main",
+ "n": 600000,
+ "contrib": {
+  "s": "5/ZFbEL3wpvYVMKkTlO7Lw==",
+  "iv": "0avPwdEsF0Bg6leK",
+  "c": "srI2dAt5GXotyoi363w/t658hWFaoz6vseTjIbL2ty/iKZB4u8PM2+3YTV9mKrtBEeJ9Sn7oEc7H0eTI0vfGCuljwkRMxwCogtYs7kUbAOyQBmGQ0fcotCCykFY95D+6UOTKwvgyGkbuxTKcUA=="
+ },
+ "admin": {
+  "s": "v22u0qaIK8SCyvJY7Clveg==",
+  "iv": "fp45Qz6BNSehwLxZ",
+  "c": "yjOIHUsxcf1kqcL6ctWf1LxPVR3I4umdXkWrnKAhNvn4b38V9+HXSFP6HrDwUd6rKfPuA92rZKj4wGc3VsB+sQFtW/JQWCHn3qTf+rCSLRY3aN4YXaYp1ELjw+juKvaOZXYZHm10Z3UfcycSIg=="
+ }
+}
