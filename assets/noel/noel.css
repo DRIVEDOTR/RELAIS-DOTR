@@ -117,3 +117,6 @@ body.nl-off #nl-sky,body.nl-off #nl-hero,body.nl-off #nl-bgfx,body.nl-off .nl-co
 #top .nl-toggle{margin-left:8px}
 #top .nl-toggle+.nav{margin-left:6px}
 @media (max-width:620px){.nl-toggle span{display:none}.nl-toggle{padding:0 11px}}
+
+/* Traîneau : les rennes agrandis ne doivent pas être coupés par la boîte du SVG */
+#nl-sled svg{overflow:visible}

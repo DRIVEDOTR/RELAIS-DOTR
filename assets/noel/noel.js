@@ -247,7 +247,7 @@
   /* ---------- Traîneau et rennes (Noël) ---------- */
   function renne(tx, ty, i, lead) {
     var jambes = '<path d="M13 38 L3 53 L-2 53 M21 40 L12 55 L7 55 M47 40 L59 53 L64 53 M41 41 L50 55 L55 55" stroke="#7A4420" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
-    return '<g transform="translate(' + tx + " " + ty + ')"><g class="nl-rn" style="--i:' + i + '">' + jambes +
+    return '<g transform="translate(' + tx + " " + ty + ') scale(1.6)"><g class="nl-rn" style="--i:' + i + '">' + jambes +
       '<path d="M5 33 C5 22 20 18 34 19 C46 19 54 22 56 28 C57 35 50 41 38 42 C24 43 5 43 5 33Z" fill="url(#nlg-copper)"/>' +
       '<path d="M12 37 C24 40 40 40 52 34 C50 40 40 43 28 43 C18 43 12 41 12 37Z" fill="#fff" opacity=".16"/>' +
       '<path d="M47 25 C51 15 54 10 60 8 L69 11 C72 14 69 18 64 19 C62 24 58 30 54 33Z" fill="url(#nlg-copper)"/>' +
@@ -266,7 +266,7 @@
     for (var q = 0; q < 12; q++) { var yy = 98 + (q * 37 % 60), cc = q % 3 === 0 ? "#FFE680" : q % 3 === 1 ? "#4FA8FF" : "#FFB81F"; s += '<circle class="nl-pt" style="--d:' + (.7 + (q % 4) * .18).toFixed(2) + "s;--dl:-" + (q * .23).toFixed(2) + 's" cx="12" cy="' + yy + '" r="' + (1.4 + (q % 3) * .7).toFixed(1) + '" fill="' + cc + '" filter="url(#nlg-glow)"/>'; }
     // rênes
     s += '<path d="M138 112 C170 104 196 108 222 100 M138 114 C190 112 250 104 300 96 M138 116 C210 118 290 106 366 92" stroke="#F3C969" stroke-width="1.4" fill="none" opacity=".9"/>';
-    s += renne(156, 62, 0, false) + renne(236, 54, 1, false) + renne(316, 46, 2, true);
+    s += renne(164, 80, 0, false) + renne(282, 72, 1, false) + renne(400, 64, 2, true);
     // traîneau
     s += '<g transform="translate(8 14)">';
     s += '<path d="M-6 142 C40 152 100 152 140 138 C148 134 148 126 140 128" stroke="url(#nlg-gold)" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M40 132 V146 M96 132 V145" stroke="#E3A21A" stroke-width="3.4" stroke-linecap="round"/>';
