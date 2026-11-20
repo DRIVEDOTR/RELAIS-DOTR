@@ -1,0 +1,68 @@
+/* Calque saisonnier DOTR : Noël (1–31 déc. 2026) puis Nouvel An (1–31 janv. 2027).
+   Tout est superposé à l'arrière-plan (z-index 0, sous le contenu), non interactif, et suit le fondu au scroll de la Terre.
+   Hors période, noel.js n'ajoute rien : ces règles ne s'appliquent à aucun élément. */
+
+/* Couche plein écran : traîneau (Noël) ou feux d'artifice (Nouvel An), au second plan */
+#nl-sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;transition:opacity .35s linear;will-change:opacity}
+#nl-sled{position:absolute;left:0;top:0;width:min(20vw,250px);aspect-ratio:340/170;opacity:0;will-change:transform,opacity;filter:drop-shadow(0 12px 14px rgba(10,40,120,.22))}
+#nl-sled svg{width:100%;height:100%;overflow:visible}
+#nl-fw{position:absolute;inset:0;width:100%;height:100%}
+
+/* Visuel du rond rouge (sapin ou 2027 / Happy New Year), dans la couche de la Terre donc même fondu au scroll */
+#nl-hero{position:absolute;left:57%;top:28%;width:min(19vw,290px);transform:translate(-50%,-50%);pointer-events:none;perspective:900px}
+#nl-hero.nl-hero-an{left:56%;top:15%;width:max-content;max-width:60vw}
+.nl-tree{position:relative;transform-style:preserve-3d;animation:nl-sway 9s ease-in-out infinite}
+.nl-tree svg{display:block;width:100%;height:auto;overflow:visible}
+.nl-tree .nl-l{animation:nl-blink 1.8s ease-in-out infinite;animation-delay:calc(var(--i) * -0.27s)}
+.nl-tree .nl-star{animation:nl-pulse 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.nl-tree .nl-tw{animation:nl-twinkle 2.4s ease-in-out infinite;animation-delay:calc(var(--i) * -0.4s);transform-box:fill-box;transform-origin:center}
+.nl-tree .nl-halo{animation:nl-breathe 4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+
+/* 2027 et Happy New Year DOTR : texte 3D (couches d'extrusion + dégradé brillant qui balaie le texte) */
+.nl-scene{transform-style:preserve-3d;animation:nl-tilt 9s ease-in-out infinite;text-align:center;font-family:Poppins,system-ui,sans-serif;font-weight:800;line-height:.95}
+.nl-3d{display:block;transform-style:preserve-3d}
+.nl-year{font-size:clamp(70px,8vw,128px);letter-spacing:-.02em;--ext:#0B2A9E}
+.nl-hny{font-size:clamp(18px,2.2vw,34px);letter-spacing:.01em;margin-top:.1em;--ext:#FFB800}
+.nl-stack{position:relative;display:inline-block;padding:0 .04em .08em}
+.nl-ext{position:absolute;left:0;top:0;color:var(--ext);transform:translate(calc(var(--d) * .7px),calc(var(--d) * 1px));white-space:nowrap}
+.nl-front{position:relative;display:inline-block;white-space:nowrap;color:transparent;-webkit-background-clip:text;background-clip:text;
+  background-image:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.95) 50%,transparent 60%),linear-gradient(180deg,#FFF8BF 0%,#FFD21F 46%,#FF9F00 100%);
+  background-size:250% 100%,100% 100%;background-repeat:no-repeat;animation:nl-shine 3.6s linear infinite}
+.nl-hny .nl-front{background-image:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.95) 50%,transparent 60%),linear-gradient(180deg,#8FB8FF 0%,#1F6BFF 50%,#0037C4 100%)}
+
+/* Bulles dynamiques du second plan : motif ou message qui tourne sur lui-même (effet 3D) */
+.hero-bubbles .nl-coin{position:absolute;left:14%;top:14%;width:72%;height:72%;transform-style:preserve-3d;animation:nl-turn var(--t,7s) linear infinite;animation-delay:var(--dl,0s);pointer-events:none}
+.nl-face{position:absolute;inset:0;display:grid;place-items:center;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.nl-face.nl-b{transform:rotateY(180deg)}
+.nl-face svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 2px 2px rgba(10,30,80,.22))}
+.nl-lbl{font-family:Poppins,system-ui,sans-serif;font-weight:800;white-space:nowrap;line-height:1;color:#1F5BFF;text-shadow:0 1px 0 #FFD21F,0 0 6px rgba(255,210,31,.55)}
+.nl-face.nl-b .nl-lbl{color:#FFC400;text-shadow:0 1px 0 #0B2A9E,0 0 6px rgba(31,107,255,.6)}
+
+/* Animations */
+@keyframes nl-sway{0%,100%{transform:translateY(0) rotateY(-12deg)}50%{transform:translateY(-8px) rotateY(12deg)}}
+@keyframes nl-tilt{0%,100%{transform:rotateX(6deg) rotateY(-8deg)}50%{transform:rotateX(-4deg) rotateY(8deg)}}
+@keyframes nl-blink{0%,100%{opacity:.3}50%{opacity:1;filter:drop-shadow(0 0 4px rgba(255,240,180,.95))}}
+@keyframes nl-pulse{0%,100%{transform:scale(1);opacity:.95}50%{transform:scale(1.12);opacity:1}}
+@keyframes nl-twinkle{0%,100%{opacity:.2;transform:scale(.6)}50%{opacity:1;transform:scale(1.15)}}
+@keyframes nl-breathe{0%,100%{opacity:.5;transform:scale(.97)}50%{opacity:1;transform:scale(1.03)}}
+@keyframes nl-turn{to{transform:rotateY(360deg)}}
+@keyframes nl-shine{from{background-position:150% 0,0 0}to{background-position:-60% 0,0 0}}
+@keyframes nl-bob{from{transform:translateY(0)}to{transform:translateY(-5px)}}
+.nl-rn{animation:nl-bob .55s ease-in-out infinite alternate;animation-delay:calc(var(--i) * -0.13s)}
+
+/* Responsive */
+@media (max-width:860px){
+  #nl-hero{left:50%;top:21%;width:52vw}
+  #nl-hero.nl-hero-an{left:50%;top:20%;width:max-content;max-width:90vw}
+  #nl-sled{width:150px}
+  .nl-year{font-size:clamp(70px,22vw,130px)}
+  .nl-hny{font-size:clamp(16px,4.4vw,26px)}
+}
+
+/* Accessibilité et impression : pas de mouvement si demandé, rien à l'impression */
+@media (prefers-reduced-motion:reduce){
+  #nl-sled,#nl-fw,.nl-coin,.nl-scene,.nl-tree,.nl-front{animation:none!important}
+  #nl-sled{display:none}
+  .nl-front{background-position:0 0,0 0}
+}
+@media print{#nl-sky,#nl-hero,.hero-bubbles .nl-coin{display:none}}
