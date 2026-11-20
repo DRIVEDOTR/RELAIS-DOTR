@@ -102,3 +102,18 @@
   #nl-sled{display:none}
 }
 @media print{#nl-sky,#nl-hero,.hero-bubbles .nl-coin{display:none}}
+
+/* Masquage des animations (bouton « Animations » de la barre du haut) */
+body.nl-off #nl-sky,body.nl-off #nl-hero,body.nl-off #nl-bgfx,body.nl-off .nl-coin{display:none!important}
+
+/* Bouton « Animations » : même famille visuelle que « Verrouillé » */
+.nl-toggle{flex:none;height:40px;padding:0 14px;gap:9px;display:inline-flex;align-items:center;font:600 13px/1 Poppins,system-ui,sans-serif;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--blue);cursor:pointer;box-shadow:var(--shadow-s);transition:transform .15s,border-color .2s,color .2s}
+.nl-toggle:hover{transform:translateY(-1px);border-color:var(--cyan)}
+.nl-toggle:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.nl-sw{position:relative;width:30px;height:16px;border-radius:999px;background:linear-gradient(90deg,#2B47F6,#33D5FB);flex:none;transition:background .2s}
+.nl-sw::after{content:"";position:absolute;top:2px;left:16px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .2s}
+.nl-toggle.off .nl-sw{background:#C9D6E8}
+.nl-toggle.off .nl-sw::after{left:2px}
+#top .nl-toggle{margin-left:8px}
+#top .nl-toggle+.nav{margin-left:6px}
+@media (max-width:620px){.nl-toggle span{display:none}.nl-toggle{padding:0 11px}}

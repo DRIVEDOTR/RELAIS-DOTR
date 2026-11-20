@@ -24,6 +24,48 @@
 
   var NOEL = MODE === "noel";
   var reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  /* ---------- Bouton « Animations » (barre du haut, à côté de « Verrouillé ») ----------
+     Affiché par défaut. Le choix est mémorisé sur ce navigateur. Masqué = animations arrêtées (pas de calcul). */
+  var CLE = "dotr-anim";
+  var visible = true;
+  try { visible = localStorage.getItem(CLE) !== "off"; } catch (e) {}
+  var moteur3D = null; // moteur WebGL du texte 3D (pause / reprise)
+  var relances = [];   // redémarrage des boucles (traîneau, feux) quand on réaffiche
+
+  function appliquer() {
+    document.body.classList.toggle("nl-off", !visible);
+    if (moteur3D) {
+      if (visible) moteur3D.resume(); else moteur3D.pause();
+    }
+    var b = document.querySelector(".nl-toggle");
+    if (!b) return;
+    var libelle = visible ? "Masquer les animations" : "Afficher les animations";
+    b.setAttribute("aria-pressed", visible ? "true" : "false");
+    b.setAttribute("aria-label", libelle);
+    b.title = libelle;
+    b.classList.toggle("off", !visible);
+  }
+  function basculer() {
+    visible = !visible;
+    try { localStorage.setItem(CLE, visible ? "on" : "off"); } catch (e) {}
+    if (visible) relances.forEach(function (f) { f(); });
+    appliquer();
+  }
+  function bouton() {
+    var top = document.getElementById("top");
+    if (!top || top.querySelector(".nl-toggle")) return;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "nl-toggle";
+    b.innerHTML = '<i class="nl-sw" aria-hidden="true"></i><span>Animations</span>';
+    b.addEventListener("click", basculer);
+    var v = top.querySelector(".vault-btn"), n = top.querySelector(".nav");
+    if (v) v.insertAdjacentElement("afterend", b);
+    else if (n) n.parentNode.insertBefore(b, n);
+    else return;
+    appliquer();
+  }
   var rnd = function (a, b) { return a + Math.random() * (b - a); };
   var pick = function (arr) { return arr[Math.floor(Math.random() * arr.length)]; };
   var bgfx = document.getElementById("bgfx");
@@ -277,7 +319,7 @@
     } catch (e) { return repli(); }
     var sc = document.createElement("script");
     sc.src = (document.currentScript && document.currentScript.src ? document.currentScript.src : "assets/noel/noel.js").replace(/noel\.js(\?.*)?$/, "noel3d.js$1");
-    sc.onload = function () { try { window.NoelText3D.mount(cv, { reduce: reduce }); h.classList.add("nl-ok"); } catch (e) { repli(); } };
+    sc.onload = function () { try { moteur3D = window.NoelText3D.mount(cv, { reduce: reduce }); h.classList.add("nl-ok"); appliquer(); } catch (e) { repli(); } };
     sc.onerror = repli;
     document.head.appendChild(sc);
   }
@@ -345,7 +387,11 @@
       c = [W * rnd(.4, .6), (yA + yB) / 2 * H + rnd(-.2, .2) * H];
       debut = now; duree = rnd(19000, 21000); passe++;
     }
+    var enCours = true;
+    function relancer() { if (!enCours) { enCours = true; requestAnimationFrame(frame); } }
+    relances.push(relancer);
     function frame(now) {
+      if (!visible) { enCours = false; etat = "attente"; fin = now + 1200; el.style.opacity = 0; return; }
       requestAnimationFrame(frame);
       if (etat === "attente") {
         if (now >= fin) { nouvelle(now); etat = "vol"; }
@@ -387,7 +433,16 @@
       }
       for (var j = 0; j < 14; j++) parts.push({ x: x, y: y, px: x, py: y, vx: rnd(-1, 1), vy: rnd(-1, 1), life: 0, max: 14, col: "#FFFFFF", r: rnd(5, 9), g: 0 });
     }
+    var enCours = true;
+    function relancer() { if (!enCours) { enCours = true; requestAnimationFrame(frame); } }
+    relances.push(relancer);
     function frame(now) {
+      if (!visible) {
+        enCours = false;
+        if (parts.length || fusees.length) { parts.length = 0; fusees.length = 0; g.clearRect(0, 0, W, H); }
+        prochain = 0;
+        return;
+      }
       requestAnimationFrame(frame);
       if (now > prochain) { lancer(); prochain = now + rnd(1870, 3200); }
       g.globalCompositeOperation = "destination-out"; g.fillStyle = "rgba(0,0,0,.2)"; g.fillRect(0, 0, W, H);
@@ -424,6 +479,11 @@
   creerCouche();
   decorerBulles();
   if (NOEL) traineau(); else { feux(); texte3D(); }
+  bouton();
+  appliquer();
+  window.addEventListener("load", bouton);
+  var barre = document.getElementById("top");
+  if (barre) new MutationObserver(bouton).observe(barre, { childList: true, subtree: true });
   fond();
   window.addEventListener("scroll", fond, { passive: true });
   window.addEventListener("hashchange", fond);
