@@ -159,6 +159,9 @@ def main():
                      "desc": "", "profils": [], "sous": {}}
                 rubs.append(r)
                 known[rub] = r
+            lbl = (meta.get("__dossiers__") or {}).get(rub + "/" + sous)
+            if lbl and sous and sous not in known[rub].setdefault("sous", {}):
+                known[rub]["sous"][sous] = lbl
             size = os.path.getsize(full)
             h = hashlib.sha1()
             with open(full, "rb") as fh:

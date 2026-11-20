@@ -197,13 +197,14 @@
       }
       var sv = m.querySelector("#msous").value, dir = sv;
       if (sv === "__new") { dir = slugDir(m.querySelector("#mnew").value); if (!dir) { err.innerHTML = '<div class="err">Donnez un nom au nouveau dossier.</div>'; return; } }
+      var newLbl = sv === "__new" ? m.querySelector("#mnew").value.trim() : "";
       var path = "documents/" + rubId + "/" + dir + "/" + safeName(file.name), title = ti.value.trim() || prettyTitle(file.name), desc = m.querySelector("#mdesc").value.trim();
       go.disabled = true; go.textContent = "Envoi en cours…";
       getFile(path).then(function (ex) {
         if (ex && !replaceOk) { replaceOk = true; go.disabled = false; go.textContent = "Oui, remplacer le fichier existant"; err.innerHTML = '<div class="err">Un fichier de ce nom existe déjà dans ce dossier. Voulez-vous le remplacer par cette version ?</div>'; return null; }
         return fileB64(file).then(function (b64) { return putFile(path, b64, "Ajout : " + safeName(file.name) + " (via Le Relais DOTR)", ex && ex.sha); }).then(function () {
           var o = state(); if (!o.add.some(function (x) { return x.path === path; })) o.add.push({ path: path, title: title, rub: rubId, sous: dir, size: file.size, ts: Date.now() }); save(o);
-          return updateMeta(function (meta) { var e = meta[path] || {}; e.title = title; if (desc) e.desc = desc; meta[path] = e; }).then(function () { return true; }, function () { return "meta"; });
+          return updateMeta(function (meta) { var e = meta[path] || {}; e.title = title; if (desc) e.desc = desc; meta[path] = e; if (newLbl) { var dd = meta.__dossiers__ || (meta.__dossiers__ = {}); dd[rubId + "/" + dir] = newLbl; } }).then(function () { return true; }, function () { return "meta"; });
         }).then(function (res) {
           if (!res) return;
           m.querySelector(".m-box").innerHTML = "<h2>C'est envoyé</h2><div class=\"okk\">« " + esc(title) + " » apparaîtra dans l'onglet d'ici 1 à 3 minutes." + (res === "meta" ? " Le titre n'a pas pu être enregistré : le nom du fichier sera utilisé." : "") + "</div><div class=\"acts\"><button class=\"btn pri\" id=\"mok\">Parfait</button></div>";
