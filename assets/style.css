@@ -565,3 +565,6 @@ section.s{padding:44px 0 8px}
 /* Bouton « Verrouillé » : fixé dans la barre du haut (toutes pages) */
 #top .vault-btn{margin-left:auto;height:40px;padding:0 16px}
 #top .vault-btn+.nav{margin-left:6px}
+
+/* Accueil : le champ de recherche s'arrête avant la zone de droite (le visuel Terre/boussole et le calque de fêtes) */
+@media (min-width:861px){.hero .sx{max-width:calc(48vw - max(28px, (100vw - 1180px) / 2 + 28px))}}
