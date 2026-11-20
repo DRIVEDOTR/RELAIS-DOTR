@@ -191,7 +191,7 @@
     return { input: input, set: function (v) { input.value = v; } };
   }
   function searchBox(id, ph, kbd) {
-    return '<div class="sx" id="' + id + '"><label class="sx-box">' + ic("search") + '<span class="sr">Rechercher</span><input type="search" autocomplete="off" placeholder="' + esc(ph) + '">' + (kbd ? "<kbd>/</kbd>" : "") + '</label><button type="button" class="vault-btn" aria-label="Documents sécurisés : verrouillé" title="Déverrouiller les documents sécurisés">' + ic("lock") + '<span>Verrouillé</span></button><div class="sx-pop" hidden></div></div>';
+    return '<div class="sx" id="' + id + '"><label class="sx-box">' + ic("search") + '<span class="sr">Rechercher</span><input type="search" autocomplete="off" placeholder="' + esc(ph) + '">' + (kbd ? "<kbd>/</kbd>" : "") + '</label><div class="sx-pop" hidden></div></div>';
   }
 
   /* ---------- structure fixe ---------- */
@@ -200,6 +200,7 @@
     document.title = (SITE.name || "Hub") + " — Docs On The Road";
     $("#top").innerHTML = '<div class="wrap"><a class="brand" href="#/" aria-label="Accueil"><img class="b-light" src="assets/img/globe-blanc.png" alt=""><img class="b-dark" src="assets/img/favicon.png" alt=""><span>' + esc(SITE.name || "Hub") + "<small>Docs On The Road</small></span></a>" +
       searchBox("sx-top", "Rechercher un document…", false).replace('class="sx"', 'class="sx top-search"') +
+      '<button type="button" class="vault-btn" aria-label="Documents sécurisés : verrouillé" title="Déverrouiller les documents sécurisés">' + ic("lock") + '<span>Verrouillé</span></button>' +
       '<nav class="nav" aria-label="Navigation"><a href="#/">' + ic("home") + '<span>Accueil</span></a><a href="#/route">' + ic("compass") + '<span>La Route</span></a><a href="#/index">' + ic("tree") + '<span>Index</span></a><a href="#/guide">' + ic("book") + "<span>Guide</span></a></nav></div>";
     topSearch = bindSearch($("#sx-top"));
     var repo = repoUrl();
