@@ -103,6 +103,10 @@
 "date": "2026-10-07",
 "h": "c4fb48d6d4fe9c8e37c065d95efd63759af9061c"
 },
+"documents/01-vendre/playbook-commercial/ordonnances-securisees-equipe-commerciale.pdf": {
+"date": "2026-11-26",
+"h": "4c50189cc3cdc9edda2606f1f3ca0f6bdc2f5253"
+},
 "documents/01-vendre/prospection-et-crm/oo4-1-protocole-de-gestion-du-crm-sellsy.pdf": {
 "date": "2026-10-07",
 "h": "5251069ff29c103fb26cc8456e1fd87e9d2dfc58"
@@ -502,6 +506,10 @@
 "documents/05-medecins/m1-onboarding/m1-onboarding-des-medecins-vms.pdf": {
 "date": "2026-10-01",
 "h": "3c8ce4743f55c758f4064498859c09e49bbcc80c"
+},
+"documents/05-medecins/m1-onboarding/tuto-creer-son-adresse-mssante-mailiz.pdf": {
+"date": "2026-11-26",
+"h": "77d0ce0f9c1569eb144fa81a988eb18b9bd9881a"
 },
 "documents/05-medecins/m3-conges-absences/m3-v1-gestion-des-conges-et-absences-des-medecins.pdf": {
 "date": "2026-10-07",

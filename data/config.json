@@ -519,6 +519,10 @@
         "why": "La fiche des missions des médecins par spécialité, avec des arguments par type d'établissement."
        },
        {
+        "path": "documents/01-vendre/playbook-commercial/ordonnances-securisees-equipe-commerciale.pdf",
+        "why": "Prescription à distance : le message à faire passer sur les ordonnances sécurisées et les promesses à éviter. Le circuit passe par la MSSanté du médecin (tuto à l'étape « Mettre en route »)."
+       },
+       {
         "path": "documents/01-vendre/playbook-commercial/oo8-1-grille-d-evaluation-d-une-simulation-de-vente.xlsx",
         "why": "Pour s'entraîner : la grille d'évaluation d'une simulation de vente."
        }
@@ -666,6 +670,14 @@
        {
         "path": "documents/04-conventions/c1-ouverture-etablissement/c1-annexe-3-conges-et-remplacements-des-medecins.pdf",
         "why": "Congés et remplacements des médecins, à annexer à la convention."
+       },
+       {
+        "path": "documents/01-vendre/playbook-commercial/ordonnances-securisees-equipe-commerciale.pdf",
+        "why": "Ordonnances sécurisées : le circuit papier transmis par MSSanté se prépare avec l'établissement et la pharmacie (équipement, archivage, remise des originaux)."
+       },
+       {
+        "path": "documents/05-medecins/m1-onboarding/tuto-creer-son-adresse-mssante-mailiz.pdf",
+        "why": "Le médecin envoie les ordonnances sécurisées depuis sa propre adresse MSSanté : voici comment la créer (Mailiz, CPS ou e-CPS) et à qui écrire par quel canal."
        }
       ]
      },
@@ -892,6 +904,10 @@
        {
         "path": "documents/05-medecins/m1-onboarding/m1-onboarding-des-medecins-vms.pdf",
         "why": "Le guide de démarrage des médecins VMS."
+       },
+       {
+        "path": "documents/05-medecins/m1-onboarding/tuto-creer-son-adresse-mssante-mailiz.pdf",
+        "why": "Étape d'arrivée : chaque professionnel avec un RPPS crée sa propre adresse MSSanté. Le circuit des ordonnances sécurisées (fiche commerciale) en dépend."
        },
        {
         "path": "documents/05-medecins/m4-deplacements-frais/m4-v1-deplacements-et-frais-de-mission.pdf",

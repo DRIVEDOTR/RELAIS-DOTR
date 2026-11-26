@@ -2556,5 +2556,44 @@
  },
  "documents/05-medecins/m4-deplacements-frais/procedure-m4v1-organisation-des-deplacements-medecin-2.pdf": {
   "title": "Procédure M4V1 Organisation des déplacements médecin 2"
+ },
+ "documents/01-vendre/playbook-commercial/ordonnances-securisees-equipe-commerciale.pdf": {
+  "date": "2026-11-26",
+  "desc": "Fiche d'une page pour l'équipe commerciale : message à faire passer sur les ordonnances sécurisées (circuit papier transmis par MSSanté), ce qu'on peut expliquer simplement et les promesses à éviter.",
+  "order": 7,
+  "profils": [
+   "commercial",
+   "communication",
+   "arrivant"
+  ],
+  "tags": [
+   "ordonnances",
+   "sécurisées",
+   "MSSanté",
+   "stupéfiants",
+   "argumentaire"
+  ],
+  "title": "Ordonnances sécurisées — message et promesses à éviter",
+  "when": "Avant de parler prescription à distance avec un établissement."
+ },
+ "documents/05-medecins/m1-onboarding/tuto-creer-son-adresse-mssante-mailiz.pdf": {
+  "date": "2026-11-26",
+  "desc": "Tuto d'une page : créer sa propre adresse MSSanté nominative (Mailiz, gratuite, avec CPS ou e-CPS) et choisir le bon canal pour envoyer ordonnances et documents (pharmacie, confrère, établissement, patient).",
+  "order": 1,
+  "profils": [
+   "medecin",
+   "direction",
+   "arrivant"
+  ],
+  "tags": [
+   "MSSanté",
+   "Mailiz",
+   "CPS",
+   "e-CPS",
+   "ordonnances",
+   "onboarding"
+  ],
+  "title": "Créer son adresse MSSanté (Mailiz)",
+  "when": "À l'arrivée d'un professionnel avec un RPPS, avant le premier envoi d'ordonnance ou de document de santé."
  }
 }
